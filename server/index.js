@@ -181,11 +181,29 @@ const path = require('path');
 const fs = require('fs');
 
 // Static serving for built client
-const distPath = path.join(__dirname, '../client/dist');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
+const distPathCandidates = [
+  path.join(__dirname, '../client/dist'),
+  path.join(process.cwd(), 'client/dist'),
+  path.join(process.cwd(), 'dist')
+];
+
+const activeDistPath = distPathCandidates.find(p => fs.existsSync(path.join(p, 'index.html')));
+
+if (activeDistPath) {
+  console.log(`[Static] Serving client from ${activeDistPath}`);
+  app.use(express.static(activeDistPath));
   app.use((req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
+    res.sendFile(path.join(activeDistPath, 'index.html'));
+  });
+} else {
+  console.warn('[Static] Warning: client/dist/index.html not found in any candidate paths!');
+  app.use((req, res) => {
+    res.status(503).send(`
+      <div style="font-family:system-ui;text-align:center;padding:50px;background:#0f172a;color:#fff;min-height:100vh;">
+        <h1 style="color:#c084fc;">Kahoot Server is Live!</h1>
+        <p>Client build is missing. Run <code>npm run build</code> to generate client/dist.</p>
+      </div>
+    `);
   });
 }
 
