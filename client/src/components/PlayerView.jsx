@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import {
   CheckCircle2, XCircle, Flame, Trophy, Award, Clock,
-  ArrowRight, Sparkles, Loader2
+  ArrowRight, Sparkles, Loader2, Volume2, VolumeX, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { KAHOOT_COLORS, AVATARS } from '../constants';
 import { sounds } from '../utils/soundEffects';
@@ -13,6 +13,16 @@ export default function PlayerView({ socket, initialPin, onExit }) {
   const [nickname, setNickname] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
   const [joinError, setJoinError] = useState('');
+  const [muted, setMuted] = useState(sounds.muted);
+  const [timeAddedNotice, setTimeAddedNotice] = useState(null);
+  const [showAllScores, setShowAllScores] = useState(false);
+
+  useEffect(() => {
+    const unsub = sounds.subscribe((status) => {
+      setMuted(status.muted);
+    });
+    return () => unsub();
+  }, []);
 
   // Player info from server
   const [playerData, setPlayerData] = useState(null);
@@ -81,10 +91,19 @@ export default function PlayerView({ socket, initialPin, onExit }) {
       }
     });
 
+    // Time added by host
+    socket.on('game:time_added', (data) => {
+      setTimeAddedNotice(`+${data.addedSeconds}s Added!`);
+      setTimeout(() => setTimeAddedNotice(null), 1500);
+    });
+
     // Answer recorded confirmation
     socket.on('player:answer_recorded', () => {
       setStage('SUBMITTED');
       sounds.playAnswerSubmit();
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(40);
+      }
     });
 
     // Answer reveal result
@@ -93,8 +112,14 @@ export default function PlayerView({ socket, initialPin, onExit }) {
       setRevealResult(data);
       if (data.isCorrect) {
         sounds.playCorrect();
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([60, 50, 100]);
+        }
       } else {
         sounds.playWrong();
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(200);
+        }
       }
     });
 
@@ -131,6 +156,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
       socket.off('game:countdown_tick');
       socket.off('player:question_started');
       socket.off('game:timer_tick');
+      socket.off('game:time_added');
       socket.off('player:answer_recorded');
       socket.off('player:answer_reveal');
       socket.off('game:leaderboard');
@@ -163,10 +189,10 @@ export default function PlayerView({ socket, initialPin, onExit }) {
   if (stage === 'JOIN') {
     return (
       <div className="max-w-md mx-auto px-4 py-8">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h1 className="text-3xl font-black text-white">Join Game</h1>
-            <p className="text-slate-400 text-sm mt-1">Enter your game PIN and pick an avatar</p>
+            <p className="text-neutral-400 text-sm mt-1">Enter your game PIN and pick an avatar</p>
           </div>
 
           {joinError && (
@@ -187,7 +213,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
           <form onSubmit={handleJoin} className="space-y-4">
             {!initialPin && (
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">
+                <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
                   Game PIN
                 </label>
                 <input
@@ -196,13 +222,13 @@ export default function PlayerView({ socket, initialPin, onExit }) {
                   placeholder="6-digit PIN"
                   value={pin}
                   onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-center text-2xl font-black tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 font-mono"
+                  className="w-full bg-black border border-neutral-700 rounded-2xl px-4 py-3 text-center text-2xl font-black tracking-widest text-white placeholder-neutral-600 focus:outline-none focus:border-purple-500 font-mono"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">
+              <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
                 Nickname
               </label>
               <input
@@ -211,16 +237,16 @@ export default function PlayerView({ socket, initialPin, onExit }) {
                 placeholder="Enter your nickname"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-white font-bold placeholder-slate-600 focus:outline-none focus:border-purple-500 text-center"
+                className="w-full bg-black border border-neutral-700 rounded-2xl px-4 py-3 text-white font-bold placeholder-neutral-600 focus:outline-none focus:border-purple-500 text-center"
               />
             </div>
 
             {/* Avatar Picker */}
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">
+              <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-2">
                 Pick Your Mascot
               </label>
-              <div className="grid grid-cols-6 gap-2 bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800">
+              <div className="grid grid-cols-6 gap-2 bg-black p-2.5 rounded-2xl border border-neutral-800">
                 {AVATARS.map((av, idx) => (
                   <button
                     key={idx}
@@ -229,7 +255,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
                     className={`h-11 rounded-xl text-xl flex items-center justify-center transition-all ${
                       selectedAvatar === av
                         ? 'bg-purple-600 ring-2 ring-purple-400 scale-110 shadow-lg'
-                        : 'hover:bg-slate-800 text-slate-300'
+                        : 'hover:bg-neutral-900 text-neutral-300'
                     }`}
                   >
                     {av}
@@ -254,7 +280,18 @@ export default function PlayerView({ socket, initialPin, onExit }) {
   if (stage === 'LOBBY') {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-8 shadow-2xl relative">
+          <div className="flex justify-end mb-1">
+            <button
+              onClick={() => sounds.toggleMute()}
+              className="p-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 text-xs flex items-center gap-1.5 transition-colors active:scale-95"
+              title={muted ? 'Unmute Sound' : 'Mute Sound'}
+            >
+              {muted ? <VolumeX className="w-3.5 h-3.5 text-neutral-400" /> : <Volume2 className="w-3.5 h-3.5 text-purple-300" />}
+              <span>{muted ? 'Muted' : 'Sound ON'}</span>
+            </button>
+          </div>
+
           <div className="w-24 h-24 rounded-full bg-purple-950/80 border-2 border-purple-500/50 flex items-center justify-center text-5xl mx-auto mb-4 animate-bounce">
             {selectedAvatar}
           </div>
@@ -262,16 +299,16 @@ export default function PlayerView({ socket, initialPin, onExit }) {
           <h1 className="text-3xl font-black text-white mb-1">
             You're in, {nickname}!
           </h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <p className="text-neutral-400 text-sm mb-6">
             Look up at the host screen. Do you see your nickname?
           </p>
 
-          <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl mb-6">
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-500 block mb-1">
+          <div className="p-4 bg-black border border-neutral-800 rounded-2xl mb-6">
+            <span className="text-xs uppercase tracking-wider font-bold text-neutral-500 block mb-1">
               Playing Quiz
             </span>
             <span className="font-extrabold text-white text-base">
-              {roomInfo?.title || 'Kahoot Quiz'}
+              {roomInfo?.title || 'Orbit Quiz'}
             </span>
           </div>
 
@@ -308,48 +345,80 @@ export default function PlayerView({ socket, initialPin, onExit }) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-4 flex flex-col min-h-[85vh]">
         {/* Top Status Bar */}
-        <div className="flex items-center justify-between gap-2 mb-3 bg-slate-900/80 border border-slate-800 rounded-2xl px-4 py-2.5">
+        <div className="flex items-center justify-between gap-2 mb-3 bg-neutral-950 border border-neutral-800 rounded-2xl px-4 py-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xl">{selectedAvatar}</span>
             <span className="font-bold text-white text-sm">{nickname}</span>
           </div>
 
-          {/* Timer Clock */}
-          <div
-            className={`px-3 py-1 rounded-xl font-black text-sm flex items-center gap-1.5 ${
-              isUrgent ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-purple-300'
-            }`}
-          >
-            <Clock className="w-4 h-4" />
-            <span>{remainingSeconds}s</span>
+          {/* Timer Clock with +5s notification */}
+          <div className="relative">
+            <div
+              className={`px-3 py-1 rounded-xl font-black text-sm flex items-center gap-1.5 ${
+                isUrgent ? 'bg-red-600 text-white animate-pulse' : 'bg-neutral-900 text-purple-300'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>{remainingSeconds}s</span>
+            </div>
+            {timeAddedNotice && (
+              <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-extrabold text-amber-300 bg-amber-950 px-2 py-0.5 rounded-full border border-amber-500/60 animate-bounce">
+                {timeAddedNotice}
+              </span>
+            )}
           </div>
 
-          <div className="text-right">
-            <span className="text-xs text-slate-400 block font-semibold">Score</span>
-            <span className="font-mono font-bold text-white text-sm">
-              {questionData.playerScore?.toLocaleString() || 0}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => sounds.toggleMute()}
+              className="p-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 transition-colors active:scale-95"
+              title={muted ? 'Unmute Sound' : 'Mute Sound'}
+            >
+              {muted ? <VolumeX className="w-3.5 h-3.5 text-neutral-400" /> : <Volume2 className="w-3.5 h-3.5 text-purple-300" />}
+            </button>
+            <div className="text-right">
+              <span className="text-xs text-neutral-400 block font-semibold">Score</span>
+              <span className="font-mono font-bold text-white text-sm">
+                {questionData.playerScore?.toLocaleString() || 0}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Question Prompt or Host Screen Notice */}
+        {questionData.questionText ? (
+          <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-5 sm:p-6 mb-3 text-center shadow-xl relative overflow-hidden">
+            <span className="text-xs uppercase tracking-wider font-extrabold text-purple-400 block mb-1">
+              Question {questionData.questionIndex + 1} of {questionData.totalQuestions}
             </span>
+            <h2 className="text-lg sm:text-2xl font-black text-white leading-snug">
+              {questionData.questionText}
+            </h2>
           </div>
-        </div>
+        ) : (
+          <div className="bg-purple-950/40 border border-purple-800/60 rounded-2xl py-2.5 px-4 mb-3 text-center">
+            <p className="text-purple-300 font-extrabold text-xs sm:text-sm tracking-wide">
+              📺 Question is on the host screen! Tap your answer below:
+            </p>
+          </div>
+        )}
 
-        {/* Host Screen Prompt Notice */}
-        <div className="bg-purple-950/40 border border-purple-800/60 rounded-2xl py-2.5 px-4 mb-3 text-center">
-          <p className="text-purple-300 font-extrabold text-xs sm:text-sm tracking-wide">
-            📺 Question is on the host screen! Tap your answer below:
-          </p>
-        </div>
-
-        {/* 4 Colored Buttons (Shapes Only) */}
+        {/* 4 Colored Buttons (Adaptive: Shapes or Shapes + Option Text) */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 flex-1">
           {KAHOOT_COLORS.map((col, idx) => (
             <button
               key={idx}
               onClick={() => handleSelectAnswer(idx)}
-              className={`rounded-3xl p-6 sm:p-10 flex items-center justify-center shadow-2xl transition-all transform active:scale-95 cursor-pointer ${col.bg} border-2 ${col.border}`}
+              className={`rounded-3xl p-4 sm:p-7 flex flex-col items-center justify-center gap-2 sm:gap-3 shadow-2xl transition-all transform active:scale-95 cursor-pointer ${col.bg} border-2 ${col.border}`}
             >
-              <span className="text-6xl sm:text-8xl text-white font-black drop-shadow-md select-none">
+              <span className={`${questionData.options ? 'text-3xl sm:text-5xl' : 'text-6xl sm:text-8xl'} text-white font-black drop-shadow-md select-none`}>
                 {col.shape}
               </span>
+              {questionData.options && questionData.options[idx] && (
+                <span className="text-white font-black text-sm sm:text-lg text-center leading-tight break-words line-clamp-3 select-none">
+                  {questionData.options[idx]}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -361,12 +430,12 @@ export default function PlayerView({ socket, initialPin, onExit }) {
   if (stage === 'SUBMITTED') {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-8 max-w-sm w-full shadow-2xl">
           <div className="w-20 h-20 rounded-full bg-purple-900/40 border border-purple-500/40 flex items-center justify-center text-4xl mx-auto mb-4 animate-pulse">
             🤞
           </div>
           <h2 className="text-2xl font-black text-white mb-2">Answer Locked In!</h2>
-          <p className="text-slate-400 text-sm mb-6">
+          <p className="text-neutral-400 text-sm mb-6">
             Fingers crossed! Waiting for other players...
           </p>
 
@@ -408,7 +477,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
           <h2 className="text-3xl font-black mb-1">
             {isCorrect ? 'Genius!' : 'Incorrect!'}
           </h2>
-          <p className="text-slate-300 text-sm mb-4">
+          <p className="text-neutral-300 text-sm mb-4">
             {isCorrect ? `+${pointsEarned.toLocaleString()} points earned` : 'Better luck on the next one!'}
           </p>
 
@@ -422,7 +491,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
 
           {/* Explanation if any */}
           {explanation && (
-            <div className="bg-black/30 rounded-2xl p-3 mb-6 text-xs text-slate-200 text-left">
+            <div className="bg-black/30 rounded-2xl p-3 mb-6 text-xs text-neutral-200 text-left">
               <span className="font-bold text-purple-300 block mb-0.5">💡 Fun Fact:</span>
               {explanation}
             </div>
@@ -431,11 +500,11 @@ export default function PlayerView({ socket, initialPin, onExit }) {
           {/* Stats Bar */}
           <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
             <div className="bg-black/20 rounded-2xl p-3">
-              <span className="text-xs uppercase font-bold text-slate-400 block">Total Score</span>
+              <span className="text-xs uppercase font-bold text-neutral-400 block">Total Score</span>
               <span className="text-2xl font-black font-mono">{totalScore?.toLocaleString() || 0}</span>
             </div>
             <div className="bg-black/20 rounded-2xl p-3">
-              <span className="text-xs uppercase font-bold text-slate-400 block">Current Rank</span>
+              <span className="text-xs uppercase font-bold text-neutral-400 block">Current Rank</span>
               <span className="text-2xl font-black font-mono">#{rank || '-'}</span>
             </div>
           </div>
@@ -448,10 +517,10 @@ export default function PlayerView({ socket, initialPin, onExit }) {
   if (stage === 'LEADERBOARD') {
     return (
       <div className="max-w-md mx-auto px-4 py-12 text-center">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-8 shadow-2xl">
           <Trophy className="w-16 h-16 text-amber-400 mx-auto mb-4 animate-bounce" />
           <h2 className="text-2xl font-black text-white mb-2">Check the Leaderboard!</h2>
-          <p className="text-slate-400 text-sm mb-6">
+          <p className="text-neutral-400 text-sm mb-6">
             Look at the host screen to see where everyone placed.
           </p>
 
@@ -470,7 +539,7 @@ export default function PlayerView({ socket, initialPin, onExit }) {
 
     return (
       <div className="max-w-md mx-auto px-4 py-8 text-center min-h-[80vh] flex flex-col justify-center">
-        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-8 shadow-2xl">
           <div className="text-6xl mb-3 animate-bounce">
             {playerRankInfo?.rank === 1 ? '🥇' : playerRankInfo?.rank === 2 ? '🥈' : playerRankInfo?.rank === 3 ? '🥉' : '🎖️'}
           </div>
@@ -478,10 +547,58 @@ export default function PlayerView({ socket, initialPin, onExit }) {
           <h1 className="text-3xl font-black text-white mb-1">
             Game Over!
           </h1>
-          <p className="text-slate-400 text-sm mb-6">
+          <p className="text-neutral-400 text-sm mb-6">
             You placed <strong className="text-purple-400">#{playerRankInfo?.rank || 1}</strong> with{' '}
             <strong className="text-white font-mono">{playerRankInfo?.score?.toLocaleString() || 0} pts</strong>!
           </p>
+
+          {/* Expandable All Players Leaderboard */}
+          {podiumData.allPlayers && podiumData.allPlayers.length > 0 && (
+            <div className="mt-6 mb-6 pt-4 border-t border-neutral-800 text-left">
+              <button
+                onClick={() => setShowAllScores(!showAllScores)}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 bg-neutral-900/80 hover:bg-neutral-900 rounded-xl border border-neutral-800 text-xs font-bold text-neutral-300 transition-colors"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                  <span>All Player Rankings ({podiumData.allPlayers.length})</span>
+                </span>
+                {showAllScores ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {showAllScores && (
+                <div className="space-y-1.5 mt-3 max-h-52 overflow-y-auto pr-1">
+                  {podiumData.allPlayers.map((p, idx) => {
+                    const rank = p.rank || idx + 1;
+                    const isMe = p.nickname === nickname;
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-center justify-between p-2.5 rounded-xl text-xs border ${
+                          isMe
+                            ? 'bg-purple-950/60 border-purple-800 ring-1 ring-purple-500'
+                            : 'bg-black/60 border-neutral-800/80'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="font-bold text-neutral-400 w-6">
+                            {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                          </span>
+                          <span>{p.avatar || '🎮'}</span>
+                          <span className={`font-semibold truncate ${isMe ? 'text-purple-300' : 'text-white'}`}>
+                            {p.nickname} {isMe && '(You)'}
+                          </span>
+                        </div>
+                        <span className="font-mono font-bold text-purple-300 shrink-0 ml-2">
+                          {p.score.toLocaleString()} pts
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <button
             onClick={onExit}

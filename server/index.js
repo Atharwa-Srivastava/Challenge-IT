@@ -23,21 +23,51 @@ const gameManager = new GameManager(io);
 // Load sample quizzes into GameManager
 sampleQuizzes.forEach(quiz => gameManager.registerQuiz(quiz));
 
-const HOST_CREDENTIALS = {
-  username: 'Atharwa_sri',
-  password: 'Atharwa@Aug'
+// ============================================================================
+// ADMIN / HOST CREDENTIALS CONFIGURATION
+// To give someone admin access without sharing your credentials, simply add
+// their username and password into the ADMIN_USERS array below!
+// ============================================================================
+const ADMIN_USERS = [
+  {
+    username: 'Atharwa_sri',
+    password: 'Atharwa@Aug'
+  }
+  // EXAMPLE: To add a new admin/host, add a comma above and uncomment below:
+  // {
+  //   username: 'cohost_username',
+  //   password: 'cohost_password'
+  // }
+];
+
+const isValidAdmin = (username, password) => {
+  if (!username || !password) return false;
+  const cleanUser = String(username).trim();
+  const cleanPass = String(password);
+  return ADMIN_USERS.some(admin => admin.username === cleanUser && admin.password === cleanPass);
 };
 
 const isHostAuthorized = (req) => {
   const authHeader = req.headers['authorization'] || req.headers['x-host-auth'];
-  if (authHeader && authHeader.includes('Atharwa_sri') && authHeader.includes('Atharwa@Aug')) {
-    return true;
+  if (authHeader) {
+    let headerStr = String(authHeader);
+    if (headerStr.startsWith('Basic ')) {
+      try {
+        headerStr = Buffer.from(headerStr.replace('Basic ', ''), 'base64').toString('utf8');
+      } catch (e) {}
+    }
+    const colonIdx = headerStr.indexOf(':');
+    if (colonIdx !== -1) {
+      const u = headerStr.slice(0, colonIdx);
+      const p = headerStr.slice(colonIdx + 1);
+      if (isValidAdmin(u, p)) return true;
+    }
   }
   const { username, password } = req.query;
-  if (username === HOST_CREDENTIALS.username && password === HOST_CREDENTIALS.password) {
+  if (isValidAdmin(username, password)) {
     return true;
   }
-  if (req.body && req.body.auth && req.body.auth.username === HOST_CREDENTIALS.username && req.body.auth.password === HOST_CREDENTIALS.password) {
+  if (req.body && req.body.auth && isValidAdmin(req.body.auth.username, req.body.auth.password)) {
     return true;
   }
   return false;
@@ -104,8 +134,11 @@ app.delete('/api/quizzes/:id', (req, res) => {
 // Host authentication endpoint
 app.post('/api/host/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === HOST_CREDENTIALS.username && password === HOST_CREDENTIALS.password) {
-    return res.json({ success: true, username: HOST_CREDENTIALS.username });
+  if (isValidAdmin(username, password)) {
+    const matchedAdmin = ADMIN_USERS.find(
+      u => u.username.toLowerCase() === String(username).trim().toLowerCase() && u.password === String(password)
+    );
+    return res.json({ success: true, username: matchedAdmin ? matchedAdmin.username : String(username).trim() });
   }
   return res.status(401).json({ success: false, message: 'Invalid host username or password' });
 });
@@ -117,7 +150,7 @@ io.on('connection', (socket) => {
   // Host creates room
   socket.on('room:create', ({ quizId, customQuiz, options, auth }) => {
     // Enforce host credentials
-    if (!auth || auth.username !== HOST_CREDENTIALS.username || auth.password !== HOST_CREDENTIALS.password) {
+    if (!auth || !isValidAdmin(auth.username, auth.password)) {
       return socket.emit('error:notice', { message: 'Unauthorized: Host credentials required.' });
     }
 
@@ -198,12 +231,29 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Host updates room options
+  socket.on('room:update_options', ({ pin, options }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.updateRoomOptions(pin, options);
+    }
+  });
+
+  // Host adds extra time to active question (+5s)
+  socket.on('game:add_time', ({ pin, seconds }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.addQuestionTime(pin, seconds || 5);
+    }
+  });
+
   // Host restarts game
   socket.on('game:restart', ({ pin }) => {
     const room = gameManager.getRoom(pin);
     if (room && room.hostSocketId === socket.id) {
       room.state = 'LOBBY';
       room.currentQuestionIndex = -1;
+      room.questions = [...room.quiz.questions];
       room.answersForCurrentQuestion.clear();
       room.players.forEach(p => {
         p.score = 0;
@@ -246,7 +296,7 @@ if (activeDistPath) {
   app.use((req, res) => {
     res.status(503).send(`
       <div style="font-family:system-ui;text-align:center;padding:50px;background:#0f172a;color:#fff;min-height:100vh;">
-        <h1 style="color:#c084fc;">Kahoot Server is Live!</h1>
+        <h1 style="color:#c084fc;">Orbit Server is Live!</h1>
         <p>Client build is missing. Run <code>npm run build</code> to generate client/dist.</p>
       </div>
     `);
@@ -255,6 +305,6 @@ if (activeDistPath) {
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Kahoot Clone Server running on http://localhost:${PORT}`);
+  console.log(`Orbit Server running on http://localhost:${PORT}`);
 });
 

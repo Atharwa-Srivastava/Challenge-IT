@@ -35,8 +35,14 @@ class GameManager {
       pin,
       hostSocketId,
       quiz,
+      questions: [...quiz.questions],
       options: {
-        showAnswersOnPlayerScreen: options.showAnswersOnPlayerScreen !== false, // default true
+        randomizeQuestions: options.randomizeQuestions || false,
+        showQuestionOnPlayers: options.showQuestionOnPlayers || false,
+        showOptionsOnPlayers: options.showOptionsOnPlayers || false,
+        showPodiumEveryQuestion: options.showPodiumEveryQuestion !== false, // default true
+        extraSeconds: Number(options.extraSeconds) || 0,
+        enableStreakBonus: options.enableStreakBonus !== false,
         timeLimitMultiplier: options.timeLimitMultiplier || 1.0,
       },
       state: 'LOBBY', // 'LOBBY' | 'COUNTDOWN' | 'QUESTION' | 'ANSWER_REVEAL' | 'LEADERBOARD' | 'FINAL_PODIUM'
@@ -51,6 +57,21 @@ class GameManager {
 
     this.rooms.set(pin, room);
     return room;
+  }
+
+  updateRoomOptions(pin, newOptions) {
+    const room = this.rooms.get(pin);
+    if (!room || room.state !== 'LOBBY') return;
+    room.options = { ...room.options, ...newOptions };
+    this.broadcastLobbyUpdate(room);
+  }
+
+  addQuestionTime(pin, seconds = 5) {
+    const room = this.rooms.get(pin);
+    if (!room || room.state !== 'QUESTION') return;
+    room.remainingSeconds = Math.max(1, room.remainingSeconds + seconds);
+    this.io.to(room.pin).emit('game:timer_tick', { remainingSeconds: room.remainingSeconds });
+    this.io.to(room.pin).emit('game:time_added', { addedSeconds: seconds, remainingSeconds: room.remainingSeconds });
   }
 
   getRoom(pin) {
@@ -128,6 +149,18 @@ class GameManager {
       return;
     }
 
+    // Randomize questions if host enabled
+    if (room.options.randomizeQuestions) {
+      const shuffled = [...room.quiz.questions];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      room.questions = shuffled;
+    } else {
+      room.questions = [...room.quiz.questions];
+    }
+
     room.currentQuestionIndex = 0;
     this.startQuestionCountdown(room);
   }
@@ -136,23 +169,23 @@ class GameManager {
     room.state = 'COUNTDOWN';
     room.answersForCurrentQuestion.clear();
 
-    const question = room.quiz.questions[room.currentQuestionIndex];
+    const question = room.questions[room.currentQuestionIndex];
     let countdown = 3;
 
     // Send countdown to host (includes question preview)
     this.io.to(room.hostSocketId).emit('game:countdown', {
       countdown,
       questionNumber: room.currentQuestionIndex + 1,
-      totalQuestions: room.quiz.questions.length,
+      totalQuestions: room.questions.length,
       questionText: question.question
     });
 
-    // Send countdown to players (buzzer view - no question text)
+    // Send countdown to players
     for (const socketId of room.players.keys()) {
       this.io.to(socketId).emit('game:countdown', {
         countdown,
         questionNumber: room.currentQuestionIndex + 1,
-        totalQuestions: room.quiz.questions.length
+        totalQuestions: room.questions.length
       });
     }
 
@@ -169,15 +202,17 @@ class GameManager {
 
   activateQuestion(room) {
     room.state = 'QUESTION';
-    const question = room.quiz.questions[room.currentQuestionIndex];
-    const timeLimit = Math.round(question.timeLimit * room.options.timeLimitMultiplier);
+    const question = room.questions[room.currentQuestionIndex];
+    const baseLimit = question.timeLimit || 20;
+    const extra = Number(room.options.extraSeconds) || 0;
+    const timeLimit = Math.max(5, Math.round(baseLimit * (room.options.timeLimitMultiplier || 1.0)) + extra);
     room.questionStartTime = Date.now();
     room.remainingSeconds = timeLimit;
 
-    // Send question and answer texts ONLY to host screen
+    // Send question and answer texts to host screen
     this.io.to(room.hostSocketId).emit('host:question_started', {
       questionIndex: room.currentQuestionIndex,
-      totalQuestions: room.quiz.questions.length,
+      totalQuestions: room.questions.length,
       question: {
         id: question.id,
         question: question.question,
@@ -189,14 +224,16 @@ class GameManager {
       answersCount: 0
     });
 
-    // Send buzzer controller ONLY to players (NO question text, NO option text)
+    // Send buzzer controller to players (conditionally include question text and options)
     for (const [socketId, player] of room.players) {
       this.io.to(socketId).emit('player:question_started', {
         questionIndex: room.currentQuestionIndex,
-        totalQuestions: room.quiz.questions.length,
+        totalQuestions: room.questions.length,
         timeLimit: timeLimit,
         playerScore: player.score,
-        playerStreak: player.streak
+        playerStreak: player.streak,
+        questionText: room.options.showQuestionOnPlayers ? question.question : null,
+        options: room.options.showOptionsOnPlayers ? question.options : null,
       });
     }
 
@@ -226,9 +263,11 @@ class GameManager {
       return { success: false, message: 'Answer already submitted.' };
     }
 
-    const question = room.quiz.questions[room.currentQuestionIndex];
+    const question = room.questions[room.currentQuestionIndex];
     const timeSpent = Math.max(0, (Date.now() - room.questionStartTime) / 1000);
-    const timeLimit = Math.round(question.timeLimit * room.options.timeLimitMultiplier);
+    const baseLimit = question.timeLimit || 20;
+    const extra = Number(room.options.extraSeconds) || 0;
+    const timeLimit = Math.max(5, Math.round(baseLimit * (room.options.timeLimitMultiplier || 1.0)) + extra);
     const isCorrect = answerIndex === question.correctIndex;
 
     // Calculate Kahoot score
@@ -239,12 +278,14 @@ class GameManager {
       const timeRatio = Math.min(1, Math.max(0, timeSpent / timeLimit));
       const speedScore = Math.round((1 - (timeRatio / 2)) * maxPoints);
 
-      // Streak bonus
+      // Streak bonus if enabled
       let streakBonus = 0;
-      if (player.streak >= 4) streakBonus = 500;
-      else if (player.streak === 3) streakBonus = 300;
-      else if (player.streak === 2) streakBonus = 200;
-      else if (player.streak === 1) streakBonus = 100;
+      if (room.options.enableStreakBonus !== false) {
+        if (player.streak >= 4) streakBonus = 500;
+        else if (player.streak === 3) streakBonus = 300;
+        else if (player.streak === 2) streakBonus = 200;
+        else if (player.streak === 1) streakBonus = 100;
+      }
 
       pointsEarned = speedScore + streakBonus;
       player.streak += 1;
@@ -292,7 +333,7 @@ class GameManager {
     if (room.state !== 'QUESTION') return;
     room.state = 'ANSWER_REVEAL';
 
-    const question = room.quiz.questions[room.currentQuestionIndex];
+    const question = room.questions[room.currentQuestionIndex];
 
     // Compute distribution of answers
     const distribution = [0, 0, 0, 0];
@@ -354,12 +395,12 @@ class GameManager {
       lastPointsEarned: p.lastPointsEarned
     }));
 
-    const isLastQuestion = room.currentQuestionIndex >= room.quiz.questions.length - 1;
+    const isLastQuestion = room.currentQuestionIndex >= room.questions.length - 1;
 
     this.io.to(room.pin).emit('game:leaderboard', {
       topPlayers: topFive,
       currentQuestionIndex: room.currentQuestionIndex,
-      totalQuestions: room.quiz.questions.length,
+      totalQuestions: room.questions.length,
       isLastQuestion
     });
   }
@@ -368,7 +409,7 @@ class GameManager {
     const room = this.rooms.get(pin);
     if (!room) return;
 
-    if (room.currentQuestionIndex >= room.quiz.questions.length - 1) {
+    if (room.currentQuestionIndex >= room.questions.length - 1) {
       this.showFinalPodium(pin);
     } else {
       room.currentQuestionIndex++;
@@ -390,23 +431,27 @@ class GameManager {
       first: sortedPlayers[0] ? {
         nickname: sortedPlayers[0].nickname,
         avatar: sortedPlayers[0].avatar,
-        score: sortedPlayers[0].score
+        score: sortedPlayers[0].score,
+        streak: sortedPlayers[0].streak
       } : null,
       second: sortedPlayers[1] ? {
         nickname: sortedPlayers[1].nickname,
         avatar: sortedPlayers[1].avatar,
-        score: sortedPlayers[1].score
+        score: sortedPlayers[1].score,
+        streak: sortedPlayers[1].streak
       } : null,
       third: sortedPlayers[2] ? {
         nickname: sortedPlayers[2].nickname,
         avatar: sortedPlayers[2].avatar,
-        score: sortedPlayers[2].score
+        score: sortedPlayers[2].score,
+        streak: sortedPlayers[2].streak
       } : null,
-      allPlayers: sortedPlayers.map(p => ({
+      allPlayers: sortedPlayers.map((p, idx) => ({
+        rank: idx + 1,
         nickname: p.nickname,
         avatar: p.avatar,
         score: p.score,
-        rank: p.rank
+        streak: p.streak
       }))
     };
 
@@ -430,7 +475,7 @@ class GameManager {
     this.io.to(room.pin).emit('lobby:updated', {
       pin: room.pin,
       quizTitle: room.quiz.title,
-      questionCount: room.quiz.questions.length,
+      questionCount: (room.questions || room.quiz.questions).length,
       players: playersList,
       options: room.options
     });

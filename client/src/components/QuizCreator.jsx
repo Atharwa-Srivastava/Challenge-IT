@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, CheckCircle2, Clock, Award, ArrowLeft, Save, Sparkles, Download, Upload } from 'lucide-react';
 import { KAHOOT_COLORS } from '../constants';
+import { getHostAuthHeader, getStoredHostAuth } from '../utils/auth';
 
 const DEFAULT_QUESTION = {
   question: '',
@@ -104,14 +105,14 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-host-auth': 'Atharwa_sri:Atharwa@Aug'
+          'x-host-auth': getHostAuthHeader()
         },
         body: JSON.stringify({
           title,
           description,
           coverImage,
           questions,
-          auth: { username: 'Atharwa_sri', password: 'Atharwa@Aug' }
+          auth: getStoredHostAuth()
         })
       });
 
@@ -180,11 +181,11 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-neutral-800">
         <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            className="p-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -193,12 +194,12 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
               <Sparkles className="w-6 h-6 text-purple-400" />
               Quiz Builder Studio
             </h1>
-            <p className="text-slate-400 text-sm">Design custom questions, set timers, and host live!</p>
+            <p className="text-neutral-400 text-sm">Design custom questions, set timers, and host live!</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold cursor-pointer border border-slate-700">
+          <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-sm font-semibold cursor-pointer border border-neutral-800 transition-colors">
             <Upload className="w-4 h-4" />
             <span>Import</span>
             <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
@@ -206,7 +207,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
 
           <button
             onClick={handleExportJSON}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-sm font-semibold border border-neutral-800 transition-colors"
           >
             <Download className="w-4 h-4" />
             <span>Export</span>
@@ -215,7 +216,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
           <button
             onClick={() => handleSaveQuiz(false)}
             disabled={isSaving}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-sm transition-all border border-neutral-700"
           >
             <Save className="w-4 h-4" />
             <span>Save Quiz</span>
@@ -241,9 +242,9 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
       {/* Main Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
         {/* Sidebar Questions List */}
-        <div className="lg:col-span-1 bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="lg:col-span-1 bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">
+            <span className="text-xs uppercase tracking-wider font-bold text-neutral-400">
               Questions ({questions.length})
             </span>
             <button
@@ -261,12 +262,12 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                 onClick={() => setActiveQuestionIndex(idx)}
                 className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between group ${
                   activeQuestionIndex === idx
-                    ? 'bg-purple-900/30 border-purple-500 text-white shadow-md'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800'
+                    ? 'bg-purple-950/60 border-purple-500 text-white shadow-md'
+                    : 'bg-neutral-900/60 border-neutral-800 text-neutral-300 hover:bg-neutral-900'
                 }`}
               >
                 <div className="flex items-center gap-2 truncate pr-2">
-                  <span className="w-6 h-6 rounded-md bg-slate-700 flex items-center justify-center text-xs font-bold shrink-0">
+                  <span className="w-6 h-6 rounded-md bg-neutral-800 flex items-center justify-center text-xs font-bold shrink-0 text-neutral-300">
                     {idx + 1}
                   </span>
                   <span className="text-sm truncate font-medium">
@@ -288,7 +289,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
 
           <button
             onClick={handleAddQuestion}
-            className="w-full mt-auto py-2.5 rounded-xl border-2 border-dashed border-slate-700 hover:border-purple-500 text-slate-400 hover:text-purple-300 flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
+            className="w-full mt-auto py-2.5 rounded-xl border-2 border-dashed border-neutral-800 hover:border-purple-500 text-neutral-400 hover:text-purple-300 flex items-center justify-center gap-2 text-sm font-semibold transition-colors"
           >
             <Plus className="w-4 h-4" /> Add Question
           </button>
@@ -297,15 +298,15 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
         {/* Main Editor Area */}
         <div className="lg:col-span-3 space-y-6">
           {/* Quiz Metadata (Title & Emoji) */}
-          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center">
+          <div className="bg-neutral-950 border border-neutral-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-center">
             <div className="flex items-center gap-2">
-              <label className="text-xs uppercase tracking-wider font-bold text-slate-400">Cover:</label>
+              <label className="text-xs uppercase tracking-wider font-bold text-neutral-400">Cover:</label>
               <input
                 type="text"
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
                 maxLength={4}
-                className="w-12 h-11 text-center text-2xl bg-slate-800 border border-slate-700 rounded-xl focus:outline-none focus:border-purple-500"
+                className="w-12 h-11 text-center text-2xl bg-black border border-neutral-700 rounded-xl focus:outline-none focus:border-purple-500 text-white"
               />
             </div>
             <div className="flex-1 w-full">
@@ -314,16 +315,16 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                 placeholder="Quiz Title (e.g., Marvel Superheroes Quiz)"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-bold text-lg placeholder-slate-500 focus:outline-none focus:border-purple-500"
+                className="w-full bg-black border border-neutral-700 rounded-xl px-4 py-2.5 text-white font-bold text-lg placeholder-neutral-500 focus:outline-none focus:border-purple-500"
               />
             </div>
           </div>
 
           {/* Active Question Editor */}
           {currentQ && (
-            <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+            <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 shadow-xl space-y-6">
               {/* Question Settings Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-neutral-800">
                 <span className="text-purple-400 font-bold text-sm">
                   Editing Question {activeQuestionIndex + 1} of {questions.length}
                 </span>
@@ -331,11 +332,11 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                 <div className="flex items-center gap-4">
                   {/* Timer selection */}
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400" />
+                    <Clock className="w-4 h-4 text-neutral-400" />
                     <select
                       value={currentQ.timeLimit}
                       onChange={(e) => handleUpdateQuestion('timeLimit', Number(e.target.value))}
-                      className="bg-slate-800 text-white text-sm font-semibold rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-purple-500"
+                      className="bg-neutral-900 text-white text-sm font-semibold rounded-lg px-2.5 py-1.5 border border-neutral-700 focus:outline-none focus:border-purple-500"
                     >
                       <option value={10}>10 seconds</option>
                       <option value={15}>15 seconds</option>
@@ -351,7 +352,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                     <select
                       value={currentQ.points}
                       onChange={(e) => handleUpdateQuestion('points', Number(e.target.value))}
-                      className="bg-slate-800 text-white text-sm font-semibold rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-purple-500"
+                      className="bg-neutral-900 text-white text-sm font-semibold rounded-lg px-2.5 py-1.5 border border-neutral-700 focus:outline-none focus:border-purple-500"
                     >
                       <option value={1000}>Standard (1,000 pts)</option>
                       <option value={2000}>Double Points (2,000 pts)</option>
@@ -363,7 +364,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
 
               {/* Question Prompt Input */}
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">
+                <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-2">
                   Question Prompt
                 </label>
                 <textarea
@@ -371,13 +372,13 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                   placeholder="Type your question here..."
                   value={currentQ.question}
                   onChange={(e) => handleUpdateQuestion('question', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-2xl p-4 text-white text-lg font-medium placeholder-slate-600 focus:outline-none focus:border-purple-500 shadow-inner"
+                  className="w-full bg-black border border-neutral-700 rounded-2xl p-4 text-white text-lg font-medium placeholder-neutral-600 focus:outline-none focus:border-purple-500 shadow-inner"
                 />
               </div>
 
               {/* Answer Choices Grid */}
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-2">
+                <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-2">
                   Answer Choices (Select the radio icon on the correct answer)
                 </label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -388,8 +389,8 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                         key={idx}
                         className={`relative rounded-2xl p-4 border-2 transition-all flex items-center gap-3 ${
                           isCorrect
-                            ? 'border-emerald-400 ring-2 ring-emerald-500/30 bg-slate-800/90'
-                            : 'border-slate-700 bg-slate-800/40 hover:bg-slate-800/70'
+                            ? 'border-emerald-400 ring-2 ring-emerald-500/30 bg-neutral-900'
+                            : 'border-neutral-800 bg-neutral-900/40 hover:bg-neutral-900/80'
                         }`}
                       >
                         {/* Shape Indicator */}
@@ -406,7 +407,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                           placeholder={`Option ${idx + 1}`}
                           value={currentQ.options[idx] || ''}
                           onChange={(e) => handleUpdateOption(idx, e.target.value)}
-                          className="flex-1 bg-transparent text-white font-semibold text-base placeholder-slate-500 focus:outline-none"
+                          className="flex-1 bg-transparent text-white font-semibold text-base placeholder-neutral-500 focus:outline-none"
                         />
 
                         {/* Correct Toggle Radio */}
@@ -416,7 +417,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                           className={`p-2 rounded-xl border transition-all ${
                             isCorrect
                               ? 'bg-emerald-500 text-white border-emerald-400 shadow-lg'
-                              : 'bg-slate-700/50 text-slate-400 border-slate-600 hover:text-white'
+                              : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:text-white'
                           }`}
                           title={isCorrect ? 'Correct answer' : 'Mark as correct'}
                         >
@@ -430,7 +431,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
 
               {/* Explanation (Optional) */}
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">
+                <label className="block text-xs uppercase tracking-wider font-bold text-neutral-400 mb-1">
                   Did You Know / Explanation (Shown after question is revealed)
                 </label>
                 <input
@@ -438,7 +439,7 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
                   placeholder="e.g. Neil Armstrong was the first person to set foot on the moon."
                   value={currentQ.explanation}
                   onChange={(e) => handleUpdateQuestion('explanation', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-slate-300 text-sm placeholder-slate-600 focus:outline-none focus:border-purple-500"
+                  className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-2 text-neutral-200 text-sm placeholder-neutral-600 focus:outline-none focus:border-purple-500"
                 />
               </div>
             </div>

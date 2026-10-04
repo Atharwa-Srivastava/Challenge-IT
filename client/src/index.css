@@ -2,12 +2,14 @@
 
 @layer base {
   body {
-    @apply m-0 p-0 font-sans bg-slate-950 text-white min-h-screen select-none antialiased;
+    @apply m-0 p-0 font-sans bg-black text-white min-h-screen select-none antialiased;
     overflow-x: hidden;
+    background-color: #000000;
+    color: #ffffff;
   }
 }
 
-/* Custom Kahoot colors and button pop animations */
+/* Custom Orbit colors and button pop animations */
 .kahoot-red {
   background-color: #e21b3c;
 }
@@ -63,4 +65,20 @@
 
 .animate-float {
   animation: float-podium 3s ease-in-out infinite;
+}
+
+/* Smooth sleek dark scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
 }
