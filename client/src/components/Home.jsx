@@ -38,10 +38,25 @@ export default function Home({
           'x-host-auth': 'Atharwa_sri:Atharwa@Aug'
         }
       });
+      let serverQuizzes = [];
       if (res.ok) {
-        const data = await res.json();
-        setQuizzes(data);
+        serverQuizzes = await res.json();
       }
+
+      // Merge with localStorage backup
+      let localQuizzes = [];
+      try {
+        localQuizzes = JSON.parse(localStorage.getItem('kahoot_custom_quizzes') || '[]');
+      } catch (e) {}
+
+      const combined = [...serverQuizzes];
+      for (const lq of localQuizzes) {
+        if (!combined.some(sq => sq.id === lq.id)) {
+          combined.push(lq);
+        }
+      }
+
+      setQuizzes(combined);
     } catch (e) {
       console.error('Error fetching quizzes:', e);
     } finally {
@@ -66,13 +81,17 @@ export default function Home({
     }
     if (!confirm('Are you sure you want to delete this custom quiz?')) return;
     try {
-      const res = await fetch(`/api/quizzes/${quizId}`, {
+      // Remove from server
+      await fetch(`/api/quizzes/${quizId}`, {
         method: 'DELETE',
         headers: { 'x-host-auth': 'Atharwa_sri:Atharwa@Aug' }
       });
-      if (res.ok) {
-        setQuizzes(quizzes.filter(q => q.id !== quizId));
-      }
+      // Remove from local backup
+      try {
+        const stored = JSON.parse(localStorage.getItem('kahoot_custom_quizzes') || '[]');
+        localStorage.setItem('kahoot_custom_quizzes', JSON.stringify(stored.filter(q => q.id !== quizId)));
+      } catch (e) {}
+      setQuizzes(quizzes.filter(q => q.id !== quizId));
     } catch (err) {
       alert('Failed to delete quiz.');
     }

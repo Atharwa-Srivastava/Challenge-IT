@@ -102,20 +102,35 @@ export default function QuizCreator({ onBack, onSaveAndHost }) {
     try {
       const response = await fetch('/api/quizzes', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-host-auth': 'Atharwa_sri:Atharwa@Aug'
+        },
         body: JSON.stringify({
           title,
           description,
           coverImage,
-          questions
+          questions,
+          auth: { username: 'Atharwa_sri', password: 'Atharwa@Aug' }
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save quiz on server.');
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to save quiz on server.');
       }
 
       const savedQuiz = await response.json();
+
+      // Back up to localStorage so custom quizzes persist permanently
+      try {
+        const stored = JSON.parse(localStorage.getItem('kahoot_custom_quizzes') || '[]');
+        const updated = [...stored.filter(q => q.id !== savedQuiz.id), savedQuiz];
+        localStorage.setItem('kahoot_custom_quizzes', JSON.stringify(updated));
+      } catch (e) {
+        console.error('LocalStorage backup error:', e);
+      }
+
       if (shouldHost && onSaveAndHost) {
         onSaveAndHost(savedQuiz);
       } else {

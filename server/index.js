@@ -37,6 +37,9 @@ const isHostAuthorized = (req) => {
   if (username === HOST_CREDENTIALS.username && password === HOST_CREDENTIALS.password) {
     return true;
   }
+  if (req.body && req.body.auth && req.body.auth.username === HOST_CREDENTIALS.username && req.body.auth.password === HOST_CREDENTIALS.password) {
+    return true;
+  }
   return false;
 };
 
