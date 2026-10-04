@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Users, Play, Copy, Check, FastForward, Trophy,
-  Flame, Award, ArrowRight, RotateCcw, AlertCircle, ShieldAlert, Share2
+  Flame, Award, ArrowRight, RotateCcw, AlertCircle, ShieldAlert, Share2, QrCode, Maximize2, X
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { KAHOOT_COLORS } from '../constants';
 import { sounds } from '../utils/soundEffects';
 
@@ -12,6 +13,7 @@ export default function HostView({ socket, pin, quizInfo, onExit }) {
   const [players, setPlayers] = useState([]);
   const [copiedPin, setCopiedPin] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [showLargeQr, setShowLargeQr] = useState(false);
 
   // Question state
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -185,43 +187,101 @@ export default function HostView({ socket, pin, quizInfo, onExit }) {
             <span className="text-purple-400">• {quizInfo?.questionsCount} Questions</span>
           </div>
 
-          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
+          <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-4xl mx-auto shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
-            <h2 className="text-slate-400 font-semibold tracking-wider text-xs sm:text-sm uppercase mb-1">
-              Join with Game PIN:
-            </h2>
-            <div className="flex flex-wrap items-center justify-center gap-3 my-3">
-              <div className="flex items-center gap-3 bg-slate-950/80 px-5 py-2.5 rounded-2xl border border-slate-700">
-                <span className="text-4xl sm:text-6xl font-black tracking-widest text-white font-mono drop-shadow">
-                  {pin}
-                </span>
-                <button
-                  onClick={handleCopyPin}
-                  className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95"
-                  title="Copy PIN"
-                >
-                  {copiedPin ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
-                </button>
-              </div>
-
-              <button
-                onClick={handleCopyLink}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm sm:text-base border transition-all active:scale-95 shadow-lg ${
-                  copiedLink
-                    ? 'bg-emerald-600 text-white border-emerald-500'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-purple-500 shadow-purple-600/30'
-                }`}
-              >
-                {copiedLink ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
-                <span>{copiedLink ? 'Link Copied!' : 'Copy Direct Join Link'}</span>
-              </button>
+            
+            <div className="text-center mb-4">
+              <span className="text-xs uppercase tracking-widest font-extrabold text-purple-400 bg-purple-950/80 px-3 py-1 rounded-full border border-purple-800">
+                3 Ways for Players to Join Live
+              </span>
             </div>
 
-            <div className="p-2.5 bg-slate-950/70 border border-slate-800 rounded-xl max-w-lg mx-auto">
-              <span className="text-slate-400 text-xs block mb-0.5 font-semibold">Direct Link for Group Chat:</span>
-              <span className="text-purple-300 font-mono text-xs sm:text-sm break-all select-all font-semibold">
-                {inviteUrl}
-              </span>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              {/* Way 1: Game PIN & Way 2: Direct Link (7 cols) */}
+              <div className="md:col-span-7 flex flex-col justify-center space-y-4 text-center md:text-left">
+                {/* Way 1: Game PIN */}
+                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs uppercase tracking-wider font-extrabold text-slate-400 flex items-center gap-1.5">
+                      <span>1️⃣</span> Game PIN
+                    </span>
+                    <span className="text-xs text-slate-500">Enter PIN on website</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-4xl sm:text-5xl font-black tracking-widest text-white font-mono drop-shadow">
+                      {pin}
+                    </span>
+                    <button
+                      onClick={handleCopyPin}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95 text-xs font-bold"
+                      title="Copy PIN"
+                    >
+                      {copiedPin ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedPin ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Way 2: Direct Join Link */}
+                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs uppercase tracking-wider font-extrabold text-slate-400 flex items-center gap-1.5">
+                      <span>2️⃣</span> Direct Group Link
+                    </span>
+                    <span className="text-xs text-slate-500">Auto-fills PIN</span>
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm border transition-all active:scale-95 shadow-lg ${
+                      copiedLink
+                        ? 'bg-emerald-600 text-white border-emerald-500'
+                        : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-purple-500 shadow-purple-600/30'
+                    }`}
+                  >
+                    {copiedLink ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+                    <span>{copiedLink ? 'Link Copied to Clipboard!' : 'Copy Direct Join Link'}</span>
+                  </button>
+                  <p className="text-slate-500 font-mono text-[11px] truncate mt-1.5">
+                    {inviteUrl}
+                  </p>
+                </div>
+              </div>
+
+              {/* Way 3: QR Code (5 cols) */}
+              <div className="md:col-span-5 flex flex-col items-center justify-center p-5 bg-slate-950/90 border border-slate-800 rounded-2xl text-center">
+                <div className="flex items-center justify-between w-full mb-3 px-1">
+                  <span className="text-xs uppercase tracking-wider font-extrabold text-purple-400 flex items-center gap-1.5">
+                    <QrCode className="w-4 h-4" /> 3️⃣ Scan QR Code
+                  </span>
+                  <button
+                    onClick={() => setShowLargeQr(true)}
+                    className="text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                    title="Enlarge QR Code"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div
+                  onClick={() => setShowLargeQr(true)}
+                  className="p-3 bg-white rounded-2xl shadow-xl hover:scale-105 transition-transform cursor-pointer group relative"
+                  title="Click to expand QR Code"
+                >
+                  <QRCodeSVG
+                    value={inviteUrl}
+                    size={140}
+                    level="H"
+                    marginSize={1}
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                    <Maximize2 className="w-5 h-5 drop-shadow" />
+                  </div>
+                </div>
+
+                <span className="text-slate-400 text-xs font-semibold mt-2.5">
+                  Point smartphone camera to join instantly
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -279,6 +339,43 @@ export default function HostView({ socket, pin, quizInfo, onExit }) {
             )}
           </div>
         </div>
+
+        {/* Large QR Code Modal for Big Screens / Auditoriums */}
+        {showLargeQr && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl relative animate-bounce-in">
+              <button
+                onClick={() => setShowLargeQr(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950 text-purple-300 border border-purple-800 text-xs font-bold uppercase tracking-wider mb-2">
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Scan to Join Live</span>
+              </div>
+
+              <h3 className="text-2xl font-black text-white mb-4">
+                Game PIN: <span className="font-mono text-purple-400 tracking-wider">{pin}</span>
+              </h3>
+
+              <div className="p-4 bg-white rounded-3xl inline-block shadow-2xl mx-auto mb-4">
+                <QRCodeSVG
+                  value={inviteUrl}
+                  size={240}
+                  level="H"
+                  marginSize={2}
+                />
+              </div>
+
+              <p className="text-slate-300 text-xs sm:text-sm font-medium">
+                Point your phone camera at the QR code to open the game directly!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
