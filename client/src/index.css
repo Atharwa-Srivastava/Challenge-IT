@@ -6,43 +6,32 @@
     overflow-x: hidden;
     background-color: #000000;
     color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
   }
 }
 
-/* Custom Orbit colors and button pop animations */
-.kahoot-red {
-  background-color: #e21b3c;
-}
-.kahoot-blue {
-  background-color: #1368ce;
-}
-.kahoot-yellow {
-  background-color: #d89e00;
-}
-.kahoot-green {
-  background-color: #26890c;
-}
-
-@keyframes pulse-subtle {
-  0%, 100% {
-    transform: scale(1);
+/* Subtle Apple-style micro-animations */
+@keyframes subtle-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
-  50% {
-    transform: scale(1.02);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-pulse-subtle {
-  animation: pulse-subtle 1.8s infinite ease-in-out;
+.animate-subtle-fade {
+  animation: subtle-fade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes bounce-in {
   0% {
     opacity: 0;
-    transform: scale(0.4);
-  }
-  70% {
-    transform: scale(1.08);
+    transform: scale(0.92);
   }
   100% {
     opacity: 1;
@@ -51,34 +40,34 @@
 }
 
 .animate-bounce-in {
-  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: bounce-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes float-podium {
+@keyframes float-subtle {
   0%, 100% {
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
   }
 }
 
 .animate-float {
-  animation: float-podium 3s ease-in-out infinite;
+  animation: float-subtle 4s ease-in-out infinite;
 }
 
-/* Smooth sleek dark scrollbar */
+/* Minimalist Apple-like dark scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: rgba(255, 255, 255, 0.25);
 }

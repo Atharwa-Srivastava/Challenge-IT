@@ -109,46 +109,35 @@ export default function Home({
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-12">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-950/40 via-zinc-950 to-black border border-neutral-800 p-8 sm:p-12 shadow-2xl">
-        {/* Floating background decorative shapes */}
-        <div className="absolute top-4 right-8 text-red-500/20 text-7xl font-black select-none pointer-events-none animate-pulse">
-          ▲
-        </div>
-        <div className="absolute bottom-6 right-24 text-blue-500/20 text-6xl font-black select-none pointer-events-none animate-float">
-          ◆
-        </div>
-        <div className="absolute top-1/2 right-48 text-amber-500/20 text-5xl font-black select-none pointer-events-none">
-          ●
-        </div>
-
+      <div className="relative overflow-hidden rounded-3xl bg-[#09090b] border border-white/[0.08] p-8 sm:p-14 shadow-2xl bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(255,255,255,0.06),rgba(0,0,0,0))]">
         <div className="max-w-2xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/60 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Real-time Interactive Trivia
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.05] border border-white/10 text-neutral-300 text-xs font-medium uppercase tracking-wider mb-4">
+            <Sparkles className="w-3 h-3 text-neutral-300" /> Real-time Interactive Trivia
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight mb-4">
-            Play, Compete &amp; Master Trivia <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">Live!</span>
+          <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white leading-tight mb-4">
+            Simple. Fast. <span className="text-neutral-400">Live.</span>
           </h1>
-          <p className="text-neutral-300 text-base sm:text-lg mb-8 leading-relaxed">
-            Enter your Game PIN below to join the live room, compete on speed and accuracy, and claim the podium!
+          <p className="text-neutral-400 text-base sm:text-lg mb-8 leading-relaxed font-normal">
+            Enter your Game PIN below to join the live room, compete on speed and accuracy, and climb the podium.
           </p>
 
           {/* Quick Join PIN input */}
-          <form onSubmit={handleQuickJoin} className="flex flex-col sm:flex-row gap-3 max-w-md">
+          <form onSubmit={handleQuickJoin} className="flex flex-col sm:flex-row gap-2.5 max-w-md">
             <input
               type="text"
               maxLength={6}
-              placeholder="Enter Game PIN..."
+              placeholder="Game PIN"
               value={pinInput}
               onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ''))}
-              className="flex-1 bg-black border border-neutral-700 rounded-2xl px-5 py-3.5 text-white font-black text-lg placeholder-neutral-500 focus:outline-none focus:border-purple-500 tracking-wider text-center sm:text-left"
+              className="flex-1 bg-white/[0.04] border border-white/15 rounded-full px-5 py-3 text-white font-mono text-lg placeholder-neutral-600 focus:outline-none focus:border-white/40 focus:ring-1 focus:ring-white/20 tracking-widest text-center sm:text-left transition-colors"
             />
             <button
               type="submit"
               disabled={pinInput.trim().length < 4}
-              className={`px-8 py-3.5 rounded-2xl font-black text-base transition-all shadow-lg ${
+              className={`px-7 py-3 rounded-full font-semibold text-sm transition-all active:scale-[0.98] ${
                 pinInput.trim().length >= 4
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-purple-600/30 active:scale-95'
-                  : 'bg-neutral-900 text-neutral-500 cursor-not-allowed border border-neutral-800'
+                  ? 'bg-white text-black hover:bg-neutral-200 shadow-md cursor-pointer'
+                  : 'bg-white/[0.06] text-neutral-500 border border-white/[0.08] cursor-not-allowed'
               }`}
             >
               Join Game
@@ -160,60 +149,60 @@ export default function Home({
       {/* Host Controls & Quiz Library (Visible ONLY to Logged-in Host) */}
       {isHostAuthenticated && (
         <>
-          <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+          <div className="flex items-center justify-between pb-2 border-b border-white/[0.08]">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold uppercase tracking-wider text-purple-400 bg-purple-950/80 px-3 py-1 rounded-full border border-purple-800">
+              <span className="text-xs uppercase tracking-wider font-semibold text-neutral-300 bg-white/[0.06] px-3 py-1 rounded-full border border-white/10">
                 Host Control Center
               </span>
-              <span className="text-neutral-400 text-xs sm:text-sm">
-                (Visible only to {hostUsername || 'Host'})
+              <span className="text-neutral-500 text-xs sm:text-sm">
+                (Logged in: {hostUsername || 'Host'})
               </span>
             </div>
           </div>
 
           {/* Action Cards (Host or Build) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div
-          onClick={() => {
-            const el = document.getElementById('quiz-library');
-            el?.scrollIntoView({ behavior: 'smooth' });
-          }}
-          className="group cursor-pointer bg-neutral-950 hover:bg-zinc-900/80 border border-neutral-800 hover:border-purple-500/60 rounded-3xl p-6 sm:p-8 transition-all shadow-xl hover:shadow-purple-500/10"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-purple-600/20 border border-purple-500/40 text-purple-300 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <Monitor className="w-7 h-7" />
-          </div>
-          <h3 className="text-2xl font-black text-white mb-2 group-hover:text-purple-300 transition-colors">
-            Host a Live Game
-          </h3>
-          <p className="text-neutral-400 text-sm mb-4 leading-relaxed">
-            Pick from our pre-made trivia collections or run your own customized quiz. You control the pace, timer, and leaderboard!
-          </p>
-          <div className="inline-flex items-center gap-1.5 text-purple-400 font-bold text-sm">
-            <span>Browse quiz library</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
+            <div
+              onClick={() => {
+                const el = document.getElementById('quiz-library');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="group cursor-pointer bg-[#101012] hover:bg-[#151518] border border-white/[0.08] hover:border-white/20 rounded-3xl p-6 sm:p-8 transition-all shadow-xl"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 text-white flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                <Monitor className="w-6 h-6 text-neutral-200" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-neutral-200 transition-colors">
+                Host a Live Game
+              </h3>
+              <p className="text-neutral-400 text-sm mb-4 leading-relaxed font-normal">
+                Pick from our pre-made trivia collections or run your own customized quiz. You control the pace, timer, and leaderboard.
+              </p>
+              <div className="inline-flex items-center gap-1.5 text-white font-medium text-xs">
+                <span>Browse quiz library</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
 
-        <div
-          onClick={handleCreateAction}
-          className="group cursor-pointer bg-neutral-950 hover:bg-zinc-900/80 border border-neutral-800 hover:border-pink-500/60 rounded-3xl p-6 sm:p-8 transition-all shadow-xl hover:shadow-pink-500/10"
-        >
-          <div className="w-14 h-14 rounded-2xl bg-pink-600/20 border border-pink-500/40 text-pink-300 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-            <PlusCircle className="w-7 h-7" />
+            <div
+              onClick={handleCreateAction}
+              className="group cursor-pointer bg-[#101012] hover:bg-[#151518] border border-white/[0.08] hover:border-white/20 rounded-3xl p-6 sm:p-8 transition-all shadow-xl"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 text-white flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                <PlusCircle className="w-6 h-6 text-neutral-200" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-neutral-200 transition-colors">
+                Create Custom Quiz
+              </h3>
+              <p className="text-neutral-400 text-sm mb-4 leading-relaxed font-normal">
+                Craft your own questions, configure response timers, double-point rounds, and export or import quizzes as JSON.
+              </p>
+              <div className="inline-flex items-center gap-1.5 text-white font-medium text-xs">
+                <span>Open Quiz Studio</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </div>
           </div>
-          <h3 className="text-2xl font-black text-white mb-2 group-hover:text-pink-300 transition-colors">
-            Create Custom Quiz
-          </h3>
-          <p className="text-neutral-400 text-sm mb-4 leading-relaxed">
-            Craft your own questions, configure response timers, double-point rounds, and export or import quizzes as JSON.
-          </p>
-          <div className="inline-flex items-center gap-1.5 text-pink-400 font-bold text-sm">
-            <span>Open Quiz Studio</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-      </div>
 
       {/* Quiz Library Showcase */}
       <div id="quiz-library" className="space-y-6 pt-4">
@@ -230,9 +219,9 @@ export default function Home({
 
           <button
             onClick={handleCreateAction}
-            className="flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-bold rounded-xl border border-neutral-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium rounded-full border border-white/10 transition-colors"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>Create New</span>
           </button>
         </div>
@@ -240,7 +229,7 @@ export default function Home({
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-48 bg-neutral-950 rounded-3xl animate-pulse border border-neutral-800" />
+              <div key={i} className="h-48 bg-[#101012] rounded-3xl animate-pulse border border-white/[0.08]" />
             ))}
           </div>
         ) : (
@@ -251,53 +240,53 @@ export default function Home({
               return (
                 <div
                   key={quiz.id}
-                  className="bg-neutral-950 border border-neutral-800 hover:border-neutral-700 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-2xl group"
+                  className="bg-[#101012] border border-white/[0.08] hover:border-white/20 rounded-3xl p-6 shadow-xl flex flex-col justify-between transition-all group"
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <span className="text-4xl p-2 rounded-2xl bg-neutral-900 border border-neutral-800 shadow">
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <span className="w-12 h-12 rounded-2xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-2xl shadow-sm">
                         {quiz.coverImage || '⚡'}
                       </span>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs px-2.5 py-1 rounded-full font-bold bg-purple-950/80 text-purple-300 border border-purple-800">
+                        <span className="text-[11px] px-2.5 py-0.5 rounded-full font-medium bg-white/[0.06] text-neutral-300 border border-white/10">
                           {quiz.questions?.length || 0} Questions
                         </span>
 
                         {isCustom && isHostAuthenticated && (
                           <button
                             onClick={(e) => handleDeleteQuiz(quiz.id, e)}
-                            className="p-1.5 text-neutral-400 hover:text-red-400 hover:bg-red-950/40 rounded-lg transition-colors"
+                            className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-white/[0.06] rounded-lg transition-colors"
                             title="Delete quiz"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
                     </div>
 
-                    <h4 className="text-xl font-extrabold text-white mb-1.5 group-hover:text-purple-300 transition-colors">
+                    <h4 className="text-lg font-semibold text-white mb-1.5 group-hover:text-neutral-200 transition-colors">
                       {quiz.title}
                     </h4>
-                    <p className="text-neutral-400 text-sm line-clamp-2 mb-4">
+                    <p className="text-neutral-400 text-xs sm:text-sm line-clamp-2 mb-4 font-normal">
                       {quiz.description || 'Fast paced multiplayer trivia!'}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-4 border-t border-neutral-800/80">
+                  <div className="flex items-center gap-2 pt-4 border-t border-white/[0.06]">
                     <button
                       onClick={() => setPreviewQuiz(quiz)}
-                      className="p-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 transition-colors"
+                      className="p-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white border border-white/10 transition-colors"
                       title="Preview Questions"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
                     </button>
 
                     <button
                       onClick={() => handleHostAction(quiz)}
-                      className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-full bg-white text-black hover:bg-neutral-200 font-semibold text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98]"
                     >
-                      <Play className="w-4 h-4 fill-current" />
+                      <Play className="w-3.5 h-3.5 fill-current" />
                       <span>Host Game</span>
                     </button>
                   </div>
@@ -311,44 +300,44 @@ export default function Home({
       )}
 
       {/* How It Works Banner */}
-      <div className="bg-neutral-950 border border-neutral-800 rounded-3xl p-6 sm:p-8">
-        <h3 className="text-lg font-bold text-white mb-6 text-center uppercase tracking-wider text-neutral-300">
-          How to Play Orbit
+      <div className="bg-[#101012] border border-white/[0.08] rounded-3xl p-6 sm:p-8">
+        <h3 className="text-xs font-semibold text-neutral-400 mb-6 text-center uppercase tracking-wider">
+          How Orbit Works
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-400 border border-red-500/40 flex items-center justify-center font-black shrink-0">
+            <div className="w-8 h-8 rounded-full bg-white/[0.08] text-white border border-white/15 flex items-center justify-center text-xs font-semibold shrink-0">
               1
             </div>
             <div>
-              <h4 className="font-bold text-white text-base">Host Launches Room</h4>
-              <p className="text-neutral-400 text-sm mt-1">
-                Host logs in, starts a room, and shares the PIN or direct invite link.
+              <h4 className="font-semibold text-white text-sm">Host Launches Room</h4>
+              <p className="text-neutral-400 text-xs mt-1 leading-relaxed font-normal">
+                Host logs in, starts a room, and shares the 6-digit Game PIN or direct join link.
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/20 text-blue-400 border border-blue-500/40 flex items-center justify-center font-black shrink-0">
+            <div className="w-8 h-8 rounded-full bg-white/[0.08] text-white border border-white/15 flex items-center justify-center text-xs font-semibold shrink-0">
               2
             </div>
             <div>
-              <h4 className="font-bold text-white text-base">Players Join Instantly</h4>
-              <p className="text-neutral-400 text-sm mt-1">
-                Players open the link, enter their nickname, pick an emoji, and jump in without any login required!
+              <h4 className="font-semibold text-white text-sm">Players Join Instantly</h4>
+              <p className="text-neutral-400 text-xs mt-1 leading-relaxed font-normal">
+                Players open the link, enter a nickname, pick a mascot, and jump right in with zero setup.
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center font-black shrink-0">
+            <div className="w-8 h-8 rounded-full bg-white/[0.08] text-white border border-white/15 flex items-center justify-center text-xs font-semibold shrink-0">
               3
             </div>
             <div>
-              <h4 className="font-bold text-white text-base">Speed &amp; Accuracy Wins</h4>
-              <p className="text-neutral-400 text-sm mt-1">
-                Questions display on host screen, players tap 4 shapes to climb the podium!
+              <h4 className="font-semibold text-white text-sm">Speed &amp; Accuracy Wins</h4>
+              <p className="text-neutral-400 text-xs mt-1 leading-relaxed font-normal">
+                Questions display in real time. Fast, accurate answers climb the live leaderboard.
               </p>
             </div>
           </div>
@@ -357,21 +346,21 @@ export default function Home({
 
       {/* Question Preview Modal */}
       {previewQuiz && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-neutral-950 border border-neutral-800 rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
-            <div className="p-6 border-b border-neutral-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="bg-[#121214] border border-white/[0.12] rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="p-6 border-b border-white/[0.08] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{previewQuiz.coverImage}</span>
+                <span className="text-2xl">{previewQuiz.coverImage}</span>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{previewQuiz.title}</h3>
-                  <span className="text-xs text-purple-400 font-semibold">
+                  <h3 className="text-lg font-semibold text-white">{previewQuiz.title}</h3>
+                  <span className="text-xs text-neutral-400 font-medium">
                     {previewQuiz.questions?.length} Questions
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setPreviewQuiz(null)}
-                className="text-neutral-400 hover:text-white p-2"
+                className="text-neutral-400 hover:text-white p-2 rounded-full hover:bg-white/[0.08] transition-colors"
               >
                 ✕
               </button>
@@ -379,27 +368,27 @@ export default function Home({
 
             <div className="p-6 overflow-y-auto space-y-4 flex-1">
               {previewQuiz.questions?.map((q, idx) => (
-                <div key={idx} className="bg-black border border-neutral-800 rounded-2xl p-4">
+                <div key={idx} className="bg-[#09090b] border border-white/[0.08] rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-purple-400 uppercase">Question {idx + 1}</span>
-                    <span className="text-xs text-neutral-500">{q.timeLimit}s • {q.points} pts</span>
+                    <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">Question {idx + 1}</span>
+                    <span className="text-xs text-neutral-500 font-mono">{q.timeLimit}s • {q.points} pts</span>
                   </div>
-                  <h4 className="text-base font-semibold text-white mb-3">{q.question}</h4>
+                  <h4 className="text-sm font-semibold text-white mb-3">{q.question}</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     {q.options?.map((opt, optIdx) => {
                       const isCorrect = isHostAuthenticated && optIdx === q.correctIndex;
                       return (
                         <div
                           key={optIdx}
-                          className={`p-2 rounded-xl border flex items-center gap-2 ${
+                          className={`p-2.5 rounded-xl border flex items-center gap-2 ${
                             isCorrect
-                              ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
-                              : 'bg-neutral-900 border-neutral-800 text-neutral-400'
+                              ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300 font-medium'
+                              : 'bg-white/[0.03] border-white/[0.06] text-neutral-400'
                           }`}
                         >
-                          <span>{KAHOOT_COLORS[optIdx]?.shape}</span>
+                          <span className="text-neutral-500 text-xs">{KAHOOT_COLORS[optIdx]?.shape}</span>
                           <span className="truncate">{opt}</span>
-                          {isCorrect && <span className="ml-auto">✓</span>}
+                          {isCorrect && <span className="ml-auto text-emerald-400">✓</span>}
                         </div>
                       );
                     })}
@@ -408,10 +397,10 @@ export default function Home({
               ))}
             </div>
 
-            <div className="p-4 border-t border-neutral-800 flex justify-end gap-3">
+            <div className="p-4 border-t border-white/[0.08] flex justify-end gap-2.5">
               <button
                 onClick={() => setPreviewQuiz(null)}
-                className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-800 rounded-xl font-semibold text-sm transition-colors"
+                className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 border border-white/10 rounded-full font-medium text-xs sm:text-sm transition-colors"
               >
                 Close
               </button>
@@ -421,7 +410,7 @@ export default function Home({
                   setPreviewQuiz(null);
                   handleHostAction(target);
                 }}
-                className="px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl text-sm shadow-lg shadow-purple-600/30 transition-all active:scale-95"
+                className="px-5 py-2 bg-white text-black hover:bg-neutral-200 font-semibold rounded-full text-xs sm:text-sm shadow-sm transition-all active:scale-[0.98]"
               >
                 Host This Quiz
               </button>

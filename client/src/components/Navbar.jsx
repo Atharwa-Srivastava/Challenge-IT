@@ -24,43 +24,43 @@ export default function Navbar({
   };
 
   return (
-    <header className="w-full bg-black/95 backdrop-blur-md border-b border-neutral-800 px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+    <header className="w-full bg-black/80 backdrop-blur-2xl border-b border-white/[0.08] px-4 sm:px-8 py-3.5 flex items-center justify-between sticky top-0 z-40 transition-colors">
       <div 
         onClick={onGoHome} 
-        className="flex items-center gap-2 cursor-pointer group transition-transform active:scale-95"
+        className="flex items-center gap-2.5 cursor-pointer group transition-opacity hover:opacity-85 active:scale-[0.98]"
       >
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-600 to-amber-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:rotate-6 transition-transform">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="w-8 h-8 rounded-xl bg-white/[0.08] border border-white/15 flex items-center justify-center text-white shadow-inner">
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
-        <span className="text-2xl font-black tracking-tight text-white flex items-center">
-          Orbit<span className="text-purple-400 font-extrabold italic ml-0.5">.</span>
-          <span className="text-xs ml-2 px-2 py-0.5 bg-neutral-900 text-purple-300 border border-neutral-800 rounded-full font-semibold">
-            LIVE
+        <span className="text-xl font-semibold tracking-tight text-white flex items-center">
+          Orbit
+          <span className="text-[10px] ml-2 px-2 py-0.5 bg-white/[0.06] text-neutral-400 border border-white/10 rounded-full font-medium tracking-wide uppercase">
+            Live
           </span>
         </span>
       </div>
 
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Host Login / Status Badge */}
         {isHostAuthenticated ? (
           <div className="flex items-center gap-1.5">
-            <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/60 text-purple-300 text-xs font-bold">
-              <Unlock className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-neutral-200 text-xs font-medium">
+              <Unlock className="w-3 h-3 text-neutral-400" />
               <span>{hostUsername || 'Host'}</span>
             </span>
             <button
               onClick={onHostLogout}
-              className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-400 hover:text-red-400 text-xs font-semibold border border-neutral-800 transition-colors flex items-center gap-1"
+              className="px-2.5 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.1] text-neutral-400 hover:text-white text-xs font-medium border border-white/10 transition-colors flex items-center gap-1"
               title="Logout Host"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3 h-3" />
               <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         ) : (
           <button
             onClick={onOpenHostLogin}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 text-xs font-bold border border-purple-800 transition-all hover:scale-105 active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white text-black hover:bg-neutral-200 text-xs font-semibold transition-all active:scale-[0.98] shadow-sm"
           >
             <Lock className="w-3.5 h-3.5" />
             <span>Host Login</span>
@@ -68,29 +68,25 @@ export default function Navbar({
         )}
 
         {currentRole && (
-          <span className="hidden md:inline-block text-xs uppercase tracking-wider font-bold px-3 py-1 bg-neutral-900 rounded-full text-neutral-300 border border-neutral-800">
+          <span className="hidden md:inline-block text-[11px] uppercase tracking-wider font-semibold px-3 py-1 bg-white/[0.04] rounded-full text-neutral-400 border border-white/[0.08]">
             {currentRole}
           </span>
         )}
 
         <button
           onClick={handleToggleSound}
-          className={`p-2 rounded-xl border transition-all ${
-            muted
-              ? 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:text-white'
-              : 'bg-purple-950 text-purple-300 border-purple-800 hover:bg-purple-900/80'
-          }`}
-          title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          className="p-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-300 hover:text-white border border-white/10 transition-colors"
+          title={muted ? 'Unmute Sound' : 'Mute Sound'}
         >
-          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {muted ? <VolumeX className="w-3.5 h-3.5 text-neutral-500" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
 
         {onGoHome && (
           <button
             onClick={onGoHome}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs sm:text-sm font-medium border border-neutral-800 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-neutral-200 text-xs font-medium border border-white/10 transition-colors"
           >
-            <HomeIcon className="w-4 h-4" />
+            <HomeIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Home</span>
           </button>
         )}

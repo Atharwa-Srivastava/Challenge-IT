@@ -135,7 +135,7 @@ export default function App() {
   const activeHostUsername = hostCredentials?.username || (isHostAuthenticated ? getStoredHostAuth().username : 'Host');
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-purple-600 selection:text-white">
+    <div className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-white selection:text-black">
       <Navbar
         onGoHome={view !== 'HOME' ? handleGoHome : null}
         currentRole={view === 'HOST' ? 'Game Host' : view === 'PLAYER' ? 'Player' : null}
@@ -188,8 +188,8 @@ export default function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      <footer className="py-6 text-center text-xs text-neutral-500 border-t border-neutral-900 bg-black">
-        Orbit • Interactive Real-Time Multiplayer Quiz &amp; Trivia Platform
+      <footer className="py-6 text-center text-xs text-neutral-500 border-t border-white/[0.08] bg-black">
+        Orbit • Minimal real-time multiplayer trivia platform
       </footer>
     </div>
   );
