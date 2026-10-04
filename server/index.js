@@ -23,18 +23,44 @@ const gameManager = new GameManager(io);
 // Load sample quizzes into GameManager
 sampleQuizzes.forEach(quiz => gameManager.registerQuiz(quiz));
 
-// REST Endpoints
+const HOST_CREDENTIALS = {
+  username: 'Atharwa_sri',
+  password: 'Atharwa@Aug'
+};
+
+const isHostAuthorized = (req) => {
+  const authHeader = req.headers['authorization'] || req.headers['x-host-auth'];
+  if (authHeader && authHeader.includes('Atharwa_sri') && authHeader.includes('Atharwa@Aug')) {
+    return true;
+  }
+  const { username, password } = req.query;
+  if (username === HOST_CREDENTIALS.username && password === HOST_CREDENTIALS.password) {
+    return true;
+  }
+  return false;
+};
+
+// REST Endpoints (Host Protected)
 app.get('/api/quizzes', (req, res) => {
+  if (!isHostAuthorized(req)) {
+    return res.status(401).json({ error: 'Unauthorized: Host login required to access quizzes.' });
+  }
   res.json(gameManager.getAllQuizzes());
 });
 
 app.get('/api/quizzes/:id', (req, res) => {
+  if (!isHostAuthorized(req)) {
+    return res.status(401).json({ error: 'Unauthorized: Host login required.' });
+  }
   const quiz = gameManager.getQuiz(req.params.id);
   if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
   res.json(quiz);
 });
 
 app.post('/api/quizzes', (req, res) => {
+  if (!isHostAuthorized(req)) {
+    return res.status(401).json({ error: 'Unauthorized: Host login required.' });
+  }
   const { title, description, coverImage, questions } = req.body;
   if (!title || !questions || !Array.isArray(questions) || questions.length === 0) {
     return res.status(400).json({ error: 'Invalid quiz payload: title and questions required.' });
@@ -61,6 +87,9 @@ app.post('/api/quizzes', (req, res) => {
 });
 
 app.delete('/api/quizzes/:id', (req, res) => {
+  if (!isHostAuthorized(req)) {
+    return res.status(401).json({ error: 'Unauthorized: Host login required.' });
+  }
   const { id } = req.params;
   if (id.startsWith('quiz-')) {
     return res.status(403).json({ error: 'Cannot delete default sample quiz.' });
@@ -68,11 +97,6 @@ app.delete('/api/quizzes/:id', (req, res) => {
   gameManager.quizzes.delete(id);
   res.json({ success: true, message: 'Quiz deleted.' });
 });
-
-const HOST_CREDENTIALS = {
-  username: 'Atharwa_sri',
-  password: 'Atharwa@Aug'
-};
 
 // Host authentication endpoint
 app.post('/api/host/login', (req, res) => {

@@ -32,7 +32,12 @@ export default function Home({
 
   const fetchQuizzes = async () => {
     try {
-      const res = await fetch('/api/quizzes');
+      setLoading(true);
+      const res = await fetch('/api/quizzes', {
+        headers: {
+          'x-host-auth': 'Atharwa_sri:Atharwa@Aug'
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setQuizzes(data);
@@ -45,8 +50,13 @@ export default function Home({
   };
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    if (isHostAuthenticated) {
+      fetchQuizzes();
+    } else {
+      setQuizzes([]);
+      setLoading(false);
+    }
+  }, [isHostAuthenticated]);
 
   const handleDeleteQuiz = async (quizId, e) => {
     e.stopPropagation();
@@ -56,7 +66,10 @@ export default function Home({
     }
     if (!confirm('Are you sure you want to delete this custom quiz?')) return;
     try {
-      const res = await fetch(`/api/quizzes/${quizId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/quizzes/${quizId}`, {
+        method: 'DELETE',
+        headers: { 'x-host-auth': 'Atharwa_sri:Atharwa@Aug' }
+      });
       if (res.ok) {
         setQuizzes(quizzes.filter(q => q.id !== quizId));
       }
@@ -95,7 +108,7 @@ export default function Home({
             Play, Compete &amp; Master Trivia <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">Live!</span>
           </h1>
           <p className="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed">
-            Host live quiz game shows on the big screen while players buzz in on their phones or browsers. Experience high-speed answers, streaks, dynamic scoreboards, and podium glory.
+            Enter your Game PIN below to join the live room, compete on speed and accuracy, and claim the podium!
           </p>
 
           {/* Quick Join PIN input */}
@@ -123,8 +136,22 @@ export default function Home({
         </div>
       </div>
 
-      {/* Action Cards (Host or Build) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Host Controls & Quiz Library (Visible ONLY to Logged-in Host) */}
+      {isHostAuthenticated && (
+        <>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-extrabold uppercase tracking-wider text-purple-400 bg-purple-950/80 px-3 py-1 rounded-full border border-purple-800">
+                Host Control Center
+              </span>
+              <span className="text-slate-400 text-xs sm:text-sm">
+                (Visible only to Atharwa)
+              </span>
+            </div>
+          </div>
+
+          {/* Action Cards (Host or Build) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div
           onClick={() => {
             const el = document.getElementById('quiz-library');
@@ -259,6 +286,8 @@ export default function Home({
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* How It Works Banner */}
       <div className="bg-slate-900/50 border border-slate-800/80 rounded-3xl p-6 sm:p-8">
