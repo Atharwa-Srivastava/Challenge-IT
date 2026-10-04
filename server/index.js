@@ -1,0 +1,196 @@
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const { sampleQuizzes } = require('./sampleQuizzes');
+const GameManager = require('./gameManager');
+
+const app = express();
+const server = http.createServer(app);
+
+app.use(cors());
+app.use(express.json());
+
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+const gameManager = new GameManager(io);
+
+// Load sample quizzes into GameManager
+sampleQuizzes.forEach(quiz => gameManager.registerQuiz(quiz));
+
+// REST Endpoints
+app.get('/api/quizzes', (req, res) => {
+  res.json(gameManager.getAllQuizzes());
+});
+
+app.get('/api/quizzes/:id', (req, res) => {
+  const quiz = gameManager.getQuiz(req.params.id);
+  if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+  res.json(quiz);
+});
+
+app.post('/api/quizzes', (req, res) => {
+  const { title, description, coverImage, questions } = req.body;
+  if (!title || !questions || !Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ error: 'Invalid quiz payload: title and questions required.' });
+  }
+
+  const newQuiz = {
+    id: 'custom-' + Date.now(),
+    title,
+    description: description || 'Custom User Quiz',
+    coverImage: coverImage || '✨',
+    questions: questions.map((q, idx) => ({
+      id: q.id || `cq-${idx + 1}`,
+      question: q.question,
+      options: q.options || [],
+      correctIndex: Number(q.correctIndex) || 0,
+      timeLimit: Number(q.timeLimit) || 20,
+      points: Number(q.points) || 1000,
+      explanation: q.explanation || ''
+    }))
+  };
+
+  gameManager.registerQuiz(newQuiz);
+  res.status(201).json(newQuiz);
+});
+
+app.delete('/api/quizzes/:id', (req, res) => {
+  const { id } = req.params;
+  if (id.startsWith('quiz-')) {
+    return res.status(403).json({ error: 'Cannot delete default sample quiz.' });
+  }
+  gameManager.quizzes.delete(id);
+  res.json({ success: true, message: 'Quiz deleted.' });
+});
+
+// Socket.IO Handling
+io.on('connection', (socket) => {
+  console.log(`[Socket] Connected: ${socket.id}`);
+
+  // Host creates room
+  socket.on('room:create', ({ quizId, customQuiz, options }) => {
+    let quiz = customQuiz;
+    if (!quiz && quizId) {
+      quiz = gameManager.getQuiz(quizId);
+    }
+    if (!quiz) {
+      return socket.emit('error:notice', { message: 'Quiz could not be found.' });
+    }
+
+    const room = gameManager.createRoom(socket.id, quiz, options || {});
+    socket.join(room.pin);
+
+    socket.emit('room:created', {
+      pin: room.pin,
+      quiz: {
+        id: quiz.id,
+        title: quiz.title,
+        questionsCount: quiz.questions.length
+      },
+      options: room.options
+    });
+    console.log(`[Room Created] PIN: ${room.pin} by Host: ${socket.id}`);
+  });
+
+  // Player joins room
+  socket.on('room:join', ({ pin, nickname, avatar }) => {
+    const result = gameManager.joinRoom(pin, socket, nickname, avatar);
+    if (!result.success) {
+      return socket.emit('room:join_error', { message: result.message });
+    }
+
+    const room = gameManager.getRoom(pin);
+    socket.emit('room:joined', {
+      pin,
+      player: result.player,
+      quizTitle: room.quiz.title,
+      questionCount: room.quiz.questions.length
+    });
+    console.log(`[Player Joined] ${nickname} in PIN: ${pin}`);
+  });
+
+  // Host kicks a player
+  socket.on('room:kick_player', ({ pin, targetSocketId }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.kickPlayer(pin, targetSocketId);
+    }
+  });
+
+  // Host starts the game
+  socket.on('game:start', ({ pin }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.startGame(pin);
+    }
+  });
+
+  // Player submits answer
+  socket.on('player:submit_answer', ({ pin, answerIndex }) => {
+    gameManager.submitAnswer(pin, socket.id, answerIndex);
+  });
+
+  // Host proceeds to leaderboard
+  socket.on('game:show_leaderboard', ({ pin }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.showLeaderboard(pin);
+    }
+  });
+
+  // Host proceeds to next question
+  socket.on('game:next_question', ({ pin }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      gameManager.nextQuestion(pin);
+    }
+  });
+
+  // Host restarts game
+  socket.on('game:restart', ({ pin }) => {
+    const room = gameManager.getRoom(pin);
+    if (room && room.hostSocketId === socket.id) {
+      room.state = 'LOBBY';
+      room.currentQuestionIndex = -1;
+      room.answersForCurrentQuestion.clear();
+      room.players.forEach(p => {
+        p.score = 0;
+        p.streak = 0;
+        p.lastPointsEarned = 0;
+        p.lastAnswerCorrect = null;
+        p.rank = 0;
+      });
+      gameManager.broadcastLobbyUpdate(room);
+    }
+  });
+
+  // Disconnect
+  socket.on('disconnect', () => {
+    console.log(`[Socket] Disconnected: ${socket.id}`);
+    gameManager.handleDisconnect(socket.id);
+  });
+});
+
+const path = require('path');
+const fs = require('fs');
+
+// Static serving for built client
+const distPath = path.join(__dirname, '../client/dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.use((req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
+
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Kahoot Clone Server running on http://localhost:${PORT}`);
+});
+

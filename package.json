@@ -1,0 +1,27 @@
+{
+  "name": "kahoot-clone",
+  "version": "1.0.0",
+  "description": "Full-stack real-time Kahoot clone built with Node.js, Express, Socket.io, React, and Tailwind CSS",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "build": "npm --prefix server install && npm --prefix client install && npm --prefix client run build",
+    "dev:server": "node server/index.js",
+    "dev:client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "test": "cd server && npm test"
+  },
+  "keywords": [
+    "kahoot",
+    "quiz",
+    "socket.io",
+    "react",
+    "multiplayer",
+    "realtime"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply m-0 p-0 font-sans bg-slate-950 text-white min-h-screen select-none antialiased;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Kahoot colors and button pop animations */
+.kahoot-red {
+  background-color: #e21b3c;
+}
+.kahoot-blue {
+  background-color: #1368ce;
+}
+.kahoot-yellow {
+  background-color: #d89e00;
+}
+.kahoot-green {
+  background-color: #26890c;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 1.8s infinite ease-in-out;
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes float-podium {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float-podium 3s ease-in-out infinite;
+}
