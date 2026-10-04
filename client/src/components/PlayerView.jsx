@@ -175,20 +175,31 @@ export default function PlayerView({ socket, initialPin, onExit }) {
             </div>
           )}
 
-          <form onSubmit={handleJoin} className="space-y-4">
-            <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">
-                Game PIN
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                placeholder="6-digit PIN"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-center text-2xl font-black tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 font-mono"
-              />
+          {initialPin && (
+            <div className="mb-4 p-3 bg-purple-950/70 border border-purple-600/50 rounded-2xl text-purple-300 text-xs sm:text-sm flex items-center justify-between shadow-inner">
+              <span className="font-semibold">Direct Invite Link Applied</span>
+              <span className="font-mono font-black text-white px-2.5 py-0.5 bg-purple-900 border border-purple-700 rounded-lg">
+                PIN: {pin}
+              </span>
             </div>
+          )}
+
+          <form onSubmit={handleJoin} className="space-y-4">
+            {!initialPin && (
+              <div>
+                <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">
+                  Game PIN
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="6-digit PIN"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className="w-full bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3 text-center text-2xl font-black tracking-widest text-white placeholder-slate-600 focus:outline-none focus:border-purple-500 font-mono"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-xs uppercase tracking-wider font-bold text-slate-400 mb-1">

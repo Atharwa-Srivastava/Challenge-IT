@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
 import {
   Users, Play, Copy, Check, FastForward, Trophy,
-  Flame, Award, ArrowRight, RotateCcw, AlertCircle, ShieldAlert
+  Flame, Award, ArrowRight, RotateCcw, AlertCircle, ShieldAlert, Share2
 } from 'lucide-react';
 import { KAHOOT_COLORS } from '../constants';
 import { sounds } from '../utils/soundEffects';
@@ -134,6 +134,17 @@ export default function HostView({ socket, pin, quizInfo, onExit }) {
     };
   }, [socket]);
 
+  const [copiedLink, setCopiedLink] = useState(false);
+  const inviteUrl = typeof window !== 'undefined' ? `${window.location.origin}/?pin=${pin}` : '';
+
+  const handleCopyLink = () => {
+    if (inviteUrl) {
+      navigator.clipboard.writeText(inviteUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
   const handleCopyPin = () => {
     navigator.clipboard.writeText(pin);
     setCopiedPin(true);
@@ -176,24 +187,42 @@ export default function HostView({ socket, pin, quizInfo, onExit }) {
 
           <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-2xl mx-auto shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500" />
-            <h2 className="text-slate-400 font-semibold tracking-wider text-sm sm:text-base uppercase mb-1">
+            <h2 className="text-slate-400 font-semibold tracking-wider text-xs sm:text-sm uppercase mb-1">
               Join with Game PIN:
             </h2>
-            <div className="flex items-center justify-center gap-4 my-2">
-              <span className="text-5xl sm:text-7xl font-black tracking-widest text-white font-mono drop-shadow">
-                {pin}
-              </span>
+            <div className="flex flex-wrap items-center justify-center gap-3 my-3">
+              <div className="flex items-center gap-3 bg-slate-950/80 px-5 py-2.5 rounded-2xl border border-slate-700">
+                <span className="text-4xl sm:text-6xl font-black tracking-widest text-white font-mono drop-shadow">
+                  {pin}
+                </span>
+                <button
+                  onClick={handleCopyPin}
+                  className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95"
+                  title="Copy PIN"
+                >
+                  {copiedPin ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
+                </button>
+              </div>
+
               <button
-                onClick={handleCopyPin}
-                className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-2xl border border-slate-700 transition-all active:scale-95"
-                title="Copy PIN"
+                onClick={handleCopyLink}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm sm:text-base border transition-all active:scale-95 shadow-lg ${
+                  copiedLink
+                    ? 'bg-emerald-600 text-white border-emerald-500'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-purple-500 shadow-purple-600/30'
+                }`}
               >
-                {copiedPin ? <Check className="w-6 h-6 text-green-400" /> : <Copy className="w-6 h-6" />}
+                {copiedLink ? <Check className="w-5 h-5" /> : <Share2 className="w-5 h-5" />}
+                <span>{copiedLink ? 'Link Copied!' : 'Copy Direct Join Link'}</span>
               </button>
             </div>
-            <p className="text-slate-400 text-sm">
-              Open another tab/device, click <strong className="text-purple-300">"Join Game"</strong> and enter this PIN!
-            </p>
+
+            <div className="p-2.5 bg-slate-950/70 border border-slate-800 rounded-xl max-w-lg mx-auto">
+              <span className="text-slate-400 text-xs block mb-0.5 font-semibold">Direct Link for Group Chat:</span>
+              <span className="text-purple-300 font-mono text-xs sm:text-sm break-all select-all font-semibold">
+                {inviteUrl}
+              </span>
+            </div>
           </div>
         </div>
 

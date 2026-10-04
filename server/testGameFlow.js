@@ -11,7 +11,10 @@ async function runTest() {
   await new Promise((resolve) => {
     hostSocket.on('connect', () => {
       console.log('✓ Host connected to server');
-      hostSocket.emit('room:create', { quizId: 'quiz-web-dev' });
+      hostSocket.emit('room:create', {
+        quizId: 'quiz-web-dev',
+        auth: { username: 'Atharwa_sri', password: 'Atharwa@Aug' }
+      });
     });
 
     hostSocket.on('room:created', (data) => {

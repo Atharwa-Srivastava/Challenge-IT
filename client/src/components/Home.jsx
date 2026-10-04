@@ -2,11 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { Play, PlusCircle, Sparkles, Users, HelpCircle, ArrowRight, Eye, Trash2, Smartphone, Monitor } from 'lucide-react';
 import { KAHOOT_COLORS } from '../constants';
 
-export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
+export default function Home({
+  onHostQuiz,
+  onJoinWithPin,
+  onCreateQuiz,
+  isHostAuthenticated,
+  onOpenHostLogin
+}) {
   const [quizzes, setQuizzes] = useState([]);
   const [pinInput, setPinInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [previewQuiz, setPreviewQuiz] = useState(null);
+
+  const handleHostAction = (quiz) => {
+    if (!isHostAuthenticated) {
+      onOpenHostLogin();
+      return;
+    }
+    onHostQuiz(quiz);
+  };
+
+  const handleCreateAction = () => {
+    if (!isHostAuthenticated) {
+      onOpenHostLogin();
+      return;
+    }
+    onCreateQuiz();
+  };
 
   const fetchQuizzes = async () => {
     try {
@@ -28,6 +50,10 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
 
   const handleDeleteQuiz = async (quizId, e) => {
     e.stopPropagation();
+    if (!isHostAuthenticated) {
+      onOpenHostLogin();
+      return;
+    }
     if (!confirm('Are you sure you want to delete this custom quiz?')) return;
     try {
       const res = await fetch(`/api/quizzes/${quizId}`, { method: 'DELETE' });
@@ -122,7 +148,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
         </div>
 
         <div
-          onClick={onCreateQuiz}
+          onClick={handleCreateAction}
           className="group cursor-pointer bg-slate-900/70 hover:bg-slate-900 border border-slate-800 hover:border-pink-500/60 rounded-3xl p-6 sm:p-8 transition-all shadow-xl hover:shadow-pink-500/10"
         >
           <div className="w-14 h-14 rounded-2xl bg-pink-600/20 border border-pink-500/40 text-pink-300 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -155,7 +181,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
           </div>
 
           <button
-            onClick={onCreateQuiz}
+            onClick={handleCreateAction}
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl border border-slate-700 transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
@@ -190,7 +216,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
                           {quiz.questions?.length || 0} Questions
                         </span>
 
-                        {isCustom && (
+                        {isCustom && isHostAuthenticated && (
                           <button
                             onClick={(e) => handleDeleteQuiz(quiz.id, e)}
                             className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-950/40 rounded-lg transition-colors"
@@ -220,7 +246,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
                     </button>
 
                     <button
-                      onClick={() => onHostQuiz(quiz)}
+                      onClick={() => handleHostAction(quiz)}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-sm shadow-lg shadow-purple-600/30 transition-all active:scale-95"
                     >
                       <Play className="w-4 h-4 fill-current" />
@@ -248,7 +274,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
             <div>
               <h4 className="font-bold text-white text-base">Host Launches Room</h4>
               <p className="text-slate-400 text-sm mt-1">
-                Pick a quiz and click "Host Game". A 6-digit Game PIN is generated instantly.
+                Host logs in, starts a room, and shares the PIN or direct invite link.
               </p>
             </div>
           </div>
@@ -258,9 +284,9 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
               2
             </div>
             <div>
-              <h4 className="font-bold text-white text-base">Players Buzz In</h4>
+              <h4 className="font-bold text-white text-base">Players Join Instantly</h4>
               <p className="text-slate-400 text-sm mt-1">
-                Players open another tab or phone, enter the PIN, choose an emoji mascot, and join the lobby.
+                Players open the link, enter their nickname, pick an emoji, and jump in without any login required!
               </p>
             </div>
           </div>
@@ -272,7 +298,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
             <div>
               <h4 className="font-bold text-white text-base">Speed &amp; Accuracy Wins</h4>
               <p className="text-slate-400 text-sm mt-1">
-                Faster correct answers earn up to 1,000+ points with streak bonuses to crown the podium champion!
+                Questions display on host screen, players tap 4 shapes to climb the podium!
               </p>
             </div>
           </div>
@@ -310,20 +336,23 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
                   </div>
                   <h4 className="text-base font-semibold text-white mb-3">{q.question}</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    {q.options?.map((opt, optIdx) => (
-                      <div
-                        key={optIdx}
-                        className={`p-2 rounded-xl border flex items-center gap-2 ${
-                          optIdx === q.correctIndex
-                            ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
-                            : 'bg-slate-900 border-slate-800 text-slate-400'
-                        }`}
-                      >
-                        <span>{KAHOOT_COLORS[optIdx]?.shape}</span>
-                        <span className="truncate">{opt}</span>
-                        {optIdx === q.correctIndex && <span className="ml-auto">✓</span>}
-                      </div>
-                    ))}
+                    {q.options?.map((opt, optIdx) => {
+                      const isCorrect = isHostAuthenticated && optIdx === q.correctIndex;
+                      return (
+                        <div
+                          key={optIdx}
+                          className={`p-2 rounded-xl border flex items-center gap-2 ${
+                            isCorrect
+                              ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <span>{KAHOOT_COLORS[optIdx]?.shape}</span>
+                          <span className="truncate">{opt}</span>
+                          {isCorrect && <span className="ml-auto">✓</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -340,7 +369,7 @@ export default function Home({ onHostQuiz, onJoinWithPin, onCreateQuiz }) {
                 onClick={() => {
                   const target = previewQuiz;
                   setPreviewQuiz(null);
-                  onHostQuiz(target);
+                  handleHostAction(target);
                 }}
                 className="px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl text-sm shadow"
               >

@@ -69,12 +69,31 @@ app.delete('/api/quizzes/:id', (req, res) => {
   res.json({ success: true, message: 'Quiz deleted.' });
 });
 
+const HOST_CREDENTIALS = {
+  username: 'Atharwa_sri',
+  password: 'Atharwa@Aug'
+};
+
+// Host authentication endpoint
+app.post('/api/host/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === HOST_CREDENTIALS.username && password === HOST_CREDENTIALS.password) {
+    return res.json({ success: true, username: HOST_CREDENTIALS.username });
+  }
+  return res.status(401).json({ success: false, message: 'Invalid host username or password' });
+});
+
 // Socket.IO Handling
 io.on('connection', (socket) => {
   console.log(`[Socket] Connected: ${socket.id}`);
 
   // Host creates room
-  socket.on('room:create', ({ quizId, customQuiz, options }) => {
+  socket.on('room:create', ({ quizId, customQuiz, options, auth }) => {
+    // Enforce host credentials
+    if (!auth || auth.username !== HOST_CREDENTIALS.username || auth.password !== HOST_CREDENTIALS.password) {
+      return socket.emit('error:notice', { message: 'Unauthorized: Host credentials required.' });
+    }
+
     let quiz = customQuiz;
     if (!quiz && quizId) {
       quiz = gameManager.getQuiz(quizId);

@@ -5,10 +5,24 @@ import Home from './components/Home';
 import HostView from './components/HostView';
 import PlayerView from './components/PlayerView';
 import QuizCreator from './components/QuizCreator';
+import HostLoginModal from './components/HostLoginModal';
 
 export default function App() {
   const [socket, setSocket] = useState(null);
   const [view, setView] = useState('HOME'); // 'HOME' | 'HOST' | 'PLAYER' | 'CREATOR'
+
+  // Host Authentication
+  const [isHostAuthenticated, setIsHostAuthenticated] = useState(() => {
+    return localStorage.getItem('kahoot_host_auth') === 'true';
+  });
+  const [hostCredentials, setHostCredentials] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('kahoot_host_creds') || 'null');
+    } catch {
+      return null;
+    }
+  });
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Host specifics
   const [hostPin, setHostPin] = useState(null);
@@ -16,6 +30,16 @@ export default function App() {
 
   // Player specifics
   const [playerPin, setPlayerPin] = useState('');
+
+  // Check URL query parameters for direct invite links (e.g. ?pin=123456)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pinFromUrl = urlParams.get('pin') || urlParams.get('join');
+    if (pinFromUrl && pinFromUrl.trim().length >= 4) {
+      setPlayerPin(pinFromUrl.trim());
+      setView('PLAYER');
+    }
+  }, []);
 
   useEffect(() => {
     // Connect to backend socket server
@@ -31,14 +55,46 @@ export default function App() {
       setView('HOST');
     });
 
+    newSocket.on('error:notice', (data) => {
+      alert(data.message || 'An error occurred.');
+    });
+
     return () => {
       newSocket.disconnect();
     };
   }, []);
 
+  const handleLoginSuccess = (creds) => {
+    setIsHostAuthenticated(true);
+    setHostCredentials(creds);
+    localStorage.setItem('kahoot_host_auth', 'true');
+    localStorage.setItem('kahoot_host_creds', JSON.stringify(creds));
+  };
+
+  const handleHostLogout = () => {
+    setIsHostAuthenticated(false);
+    setHostCredentials(null);
+    localStorage.removeItem('kahoot_host_auth');
+    localStorage.removeItem('kahoot_host_creds');
+    if (view === 'HOST' || view === 'CREATOR') {
+      setView('HOME');
+    }
+  };
+
+  const getEffectiveAuth = () => {
+    return hostCredentials || { username: 'Atharwa_sri', password: 'Atharwa@Aug' };
+  };
+
   const handleHostQuiz = (quiz) => {
+    if (!isHostAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!socket) return;
-    socket.emit('room:create', { quizId: quiz.id });
+    socket.emit('room:create', {
+      quizId: quiz.id,
+      auth: getEffectiveAuth()
+    });
   };
 
   const handleJoinWithPin = (pin) => {
@@ -47,12 +103,23 @@ export default function App() {
   };
 
   const handleCreateQuiz = () => {
+    if (!isHostAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     setView('CREATOR');
   };
 
   const handleSaveAndHostCustomQuiz = (quiz) => {
+    if (!isHostAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     if (!socket) return;
-    socket.emit('room:create', { customQuiz: quiz });
+    socket.emit('room:create', {
+      customQuiz: quiz,
+      auth: getEffectiveAuth()
+    });
   };
 
   const handleGoHome = () => {
@@ -69,6 +136,9 @@ export default function App() {
       <Navbar
         onGoHome={view !== 'HOME' ? handleGoHome : null}
         currentRole={view === 'HOST' ? 'Game Host' : view === 'PLAYER' ? 'Player' : null}
+        isHostAuthenticated={isHostAuthenticated}
+        onOpenHostLogin={() => setShowLoginModal(true)}
+        onHostLogout={handleHostLogout}
       />
 
       <main className="flex-1">
@@ -77,6 +147,8 @@ export default function App() {
             onHostQuiz={handleHostQuiz}
             onJoinWithPin={handleJoinWithPin}
             onCreateQuiz={handleCreateQuiz}
+            isHostAuthenticated={isHostAuthenticated}
+            onOpenHostLogin={() => setShowLoginModal(true)}
           />
         )}
 
@@ -105,8 +177,14 @@ export default function App() {
         )}
       </main>
 
+      <HostLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
       <footer className="py-6 text-center text-xs text-slate-500 border-t border-slate-900">
-        Kahoot! Clone • Full-Stack Real-Time Multiplayer Quiz System
+        Kahoot! Live • Protected Host Portal &amp; Direct Player Join Links
       </footer>
     </div>
   );
